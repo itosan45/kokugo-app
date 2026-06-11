@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>国語マスター｜高校受験対策</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:#0F172A;color:#F8FAFC;font-family:-apple-system,'Helvetica Neue',sans-serif;min-height:100vh;}
+#app{max-width:430px;margin:0 auto;padding:20px 16px 60px;}
+.screen{display:none;}.screen.active{display:block;}
+
+/* ── 共通 ── */
+.back-btn{background:#1E293B;border:none;border-radius:8px;width:36px;height:36px;color:#94A3B8;cursor:pointer;font-size:18px;flex-shrink:0;}
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
+.btn-primary{width:100%;padding:17px;border-radius:16px;border:none;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;font-size:17px;font-weight:800;cursor:pointer;margin-bottom:11px;}
+.btn-ghost{width:100%;padding:14px;border-radius:14px;border:1px solid #334155;background:transparent;color:#94A3B8;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:9px;}
+.sec-label{font-size:11px;font-weight:700;color:#475569;letter-spacing:1px;margin:22px 0 10px;}
+.card{background:#1E293B;border-radius:16px;padding:18px 20px;margin-bottom:10px;}
+.row-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+
+/* ── ホーム ── */
+.home-title{font-size:26px;font-weight:900;letter-spacing:-1px;}
+.home-sub{font-size:13px;color:#475569;margin-top:3px;}
+.streak-badge{display:inline-flex;align-items:center;gap:5px;background:#FEF3C722;border:1px solid #F59E0B44;border-radius:99px;padding:4px 12px;font-size:13px;font-weight:700;color:#F59E0B;margin-top:10px;}
+
+/* 全体進捗リング */
+.overall-card{background:#1E293B;border-radius:20px;padding:20px 22px;margin-bottom:16px;display:flex;align-items:center;gap:18px;transition:opacity .15s;}.overall-card:active{opacity:.75;}
+.ring-wrap{position:relative;flex-shrink:0;}
+.ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#F8FAFC;}
+
+/* 科目カード */
+.subject-card{background:#1E293B;border-radius:16px;padding:16px 18px;margin-bottom:10px;cursor:pointer;border:1.5px solid transparent;transition:border-color .15s;}
+.subject-card:active{opacity:.8;}
+.subject-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.subject-name{font-weight:800;font-size:16px;}
+.subject-desc{font-size:12px;color:#64748B;margin-top:2px;}
+.subject-pct{margin-left:auto;font-size:13px;font-weight:700;}
+.prog-bar{height:5px;background:#334155;border-radius:99px;overflow:hidden;margin-top:10px;}
+.prog-fill{height:100%;border-radius:99px;transition:width .5s;}
+
+/* ── ユニット一覧 ── */
+.unit-card{background:#1E293B;border-radius:14px;padding:14px 16px;margin-bottom:9px;cursor:pointer;display:flex;align-items:center;gap:12px;border:1.5px solid transparent;}
+.unit-card.locked{opacity:.4;cursor:default;}
+.unit-card.cleared{border-color:#10B98133;}
+.unit-num{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+
+/* ── クイズ（選択肢） ── */
+.quiz-card{background:#1E293B;border-radius:22px;padding:24px 22px;margin-bottom:14px;}
+.question-text{font-size:20px;font-weight:800;color:#F8FAFC;line-height:1.5;margin-bottom:6px;}
+.question-sub{font-size:13px;color:#64748B;margin-bottom:18px;}
+.choices{display:flex;flex-direction:column;gap:9px;}
+.choice-btn{width:100%;padding:14px 16px;border-radius:12px;border:2px solid #334155;background:transparent;color:#F8FAFC;font-size:15px;font-weight:600;cursor:pointer;text-align:left;transition:border-color .15s;}
+.choice-btn.correct{border-color:#10B981;background:#10B98120;color:#34D399;}
+.choice-btn.wrong{border-color:#EF4444;background:#EF444420;color:#FCA5A5;}
+.choice-btn.show-correct{border-color:#10B981;background:#10B98120;color:#34D399;}
+.choice-btn:disabled{cursor:default;}
+
+/* フィードバック */
+.feedback-box{border-radius:14px;padding:14px 16px;margin-bottom:13px;font-size:14px;line-height:1.6;}
+.feedback-correct{background:#052E1622;border:1px solid #10B98144;color:#34D399;}
+.feedback-wrong{background:#7F1D1D22;border:1px solid #EF444444;color:#FCA5A5;}
+
+/* ── 書き取りキャンバス ── */
+canvas#drawCanvas{background:#fff;border-radius:16px;touch-action:none;display:block;box-shadow:0 4px 20px #00000060;}
+.c-btn{flex:1;padding:11px;border-radius:10px;border:1px solid #334155;background:transparent;color:#94A3B8;font-size:13px;cursor:pointer;}
+.c-btn.on{border-color:#818CF8;color:#818CF8;}
+.judge-btns{display:flex;gap:10px;margin-top:10px;}
+.j-btn{flex:1;padding:14px;border-radius:12px;border:2px solid;font-size:15px;font-weight:800;cursor:pointer;background:transparent;}
+.j-ok{border-color:#10B981;color:#34D399;}.j-ng{border-color:#EF4444;color:#FCA5A5;}
+.j-ok.sel{background:#10B981;color:#fff;}.j-ng.sel{background:#EF4444;color:#fff;}
+
+/* AIヒント */
+.hint-btn{width:100%;padding:12px;border-radius:12px;border:1px solid #334155;background:transparent;color:#818CF8;font-size:14px;cursor:pointer;margin-bottom:13px;}
+.hint-card-inner{background:#1E1B3A;border:1px solid #4F46E544;border-radius:14px;padding:14px 16px;margin-bottom:13px;}
+
+/* ── 作文 ── */
+.essay-prompt{background:#1E293B;border-radius:16px;padding:20px;margin-bottom:14px;}
+.essay-prompt-text{font-size:16px;font-weight:700;color:#F8FAFC;line-height:1.6;margin-bottom:10px;}
+.essay-condition{font-size:12px;color:#F59E0B;background:#F59E0B11;border-radius:8px;padding:8px 12px;margin-bottom:6px;}
+textarea#essayInput{width:100%;background:#0F172A;border:2px solid #334155;border-radius:14px;padding:14px;color:#F8FAFC;font-size:15px;line-height:1.7;resize:vertical;min-height:160px;font-family:inherit;outline:none;}
+textarea#essayInput:focus{border-color:#4F46E5;}
+.char-count{font-size:12px;color:#475569;text-align:right;margin-top:6px;}
+
+/* ── 結果 ── */
+.res-hero{text-align:center;padding:20px 0 14px;}
+.res-score-row{display:flex;justify-content:space-around;background:#1E293B;border-radius:18px;padding:20px;margin-bottom:14px;}
+.res-val{font-size:26px;font-weight:900;}
+.res-lbl{font-size:12px;color:#475569;margin-top:2px;}
+.wrong-block{background:#1E293B;border-radius:14px;padding:16px 18px;margin-bottom:14px;}
+.wrong-row{padding:10px 0;border-bottom:1px solid #334155;}
+.wrong-row:last-child{border-bottom:none;}
+.res-btns{display:flex;gap:10px;}
+.res-retry{flex:1;padding:14px;border-radius:14px;border:1px solid #334155;background:transparent;color:#94A3B8;font-weight:700;font-size:15px;cursor:pointer;}
+.res-home{flex:2;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;font-weight:700;font-size:15px;cursor:pointer;}
+
+/* モーダル */
+.modal-overlay{position:fixed;inset:0;background:#00000088;display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+/* ── カウントダウン ── */
+.countdown-wrap{margin-bottom:14px;}
+.countdown-bar-bg{height:8px;background:#334155;border-radius:99px;overflow:hidden;margin-bottom:6px;}
+.countdown-bar-fill{height:100%;border-radius:99px;transition:width 1s linear;width:100%;}
+.countdown-text{font-size:12px;text-align:center;font-weight:700;transition:color .3s;}
+.modal-box{background:#1E293B;border-radius:24px;padding:28px 22px;max-width:340px;width:100%;text-align:center;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══ ホーム ══════════════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div style="margin-bottom:24px;">
+    <div class="home-title">📗 国語マスター</div>
+    <div class="home-sub">高校受験 全分野対策アプリ</div>
+    <div class="streak-badge" id="streak-badge">🔥 0日連続</div>
+  </div>
+
+  <!-- 全体進捗 -->
+  <div class="overall-card" onclick="showScreen('stats');renderStats()" style="cursor:pointer;">
+    <div class="ring-wrap">
+      <svg width="72" height="72" style="transform:rotate(-90deg)">
+        <circle cx="36" cy="36" r="28" fill="none" stroke="#334155" stroke-width="6"/>
+        <circle cx="36" cy="36" r="28" fill="none" stroke="#818CF8" stroke-width="6"
+          stroke-dasharray="175.9" id="overall-ring" stroke-dashoffset="175.9"
+          style="transition:stroke-dashoffset .6s" stroke-linecap="round"/>
+      </svg>
+      <div class="ring-label" id="overall-pct">0%</div>
+    </div>
+    <div>
+      <div style="font-size:17px;font-weight:800;color:#F8FAFC">全体進捗</div>
+      <div style="font-size:12px;color:#64748B;margin-top:3px" id="overall-detail">各科目を学習しよう</div>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap" id="home-tags"></div>
+    </div>
+  </div>
+
+  <div class="sec-label">▸ 科目を選ぶ</div>
+  <div id="subject-cards"></div>
+
+  <div class="sec-label">▸ 静岡県公立高校入試対策</div>
+  <div id="shizuoka-banner" onclick="showScreen('shizuoka');renderShizuoka()" style="
+    background:linear-gradient(135deg,#1E3A5F,#1E293B);
+    border:1.5px solid #3B82F620;
+    border-radius:18px;padding:18px 20px;margin-bottom:10px;cursor:pointer;
+    display:flex;align-items:center;gap:14px;">
+    <div style="font-size:36px;">🗻</div>
+    <div style="flex:1">
+      <div style="font-weight:900;font-size:17px;color:#F8FAFC;">静岡県対策モード</div>
+      <div style="font-size:12px;color:#64748B;margin-top:3px;">大問①〜⑤ 出題傾向に完全特化</div>
+      <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap">
+        <span style="background:#DC262622;color:#FCA5A5;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;">漢字8点対策</span>
+        <span style="background:#F59E0B22;color:#FCD34D;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;">推敲9点対策</span>
+        <span style="background:#10B98122;color:#34D399;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;">作文6点対策</span>
+        <span style="background:#818CF822;color:#A5B4FC;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;">古文7点対策</span>
+      </div>
+    </div>
+    <div style="color:#3B82F6;font-size:20px;font-weight:800;">›</div>
+  </div>
+
+  <div class="sec-label">▸ 特訓・テスト</div>
+  <button class="btn-ghost" id="weak-btn-home" onclick="startWeak()" style="display:none">🎯 苦手だけ集中特訓</button>
+  <button class="btn-ghost" onclick="startMogi()">📝 模試モード（全分野混合10問）</button>
+  <button class="btn-ghost" onclick="showScreen('stats');renderStats()">📊 学習記録を見る</button>
+</div>
+
+<!-- ══ ユニット一覧 ══════════════════════════════════ -->
+<div id="screen-units" class="screen">
+  <div class="row-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div>
+      <div style="font-size:18px;font-weight:800" id="units-title"></div>
+      <div style="font-size:12px;color:#64748B" id="units-desc"></div>
+    </div>
+  </div>
+  <div id="units-list"></div>
+</div>
+
+<!-- ══ クイズ画面（選択肢型） ══════════════════════ -->
+<div id="screen-quiz" class="screen">
+  <div class="row-header">
+    <button class="back-btn" onclick="showScreen('units')">←</button>
+    <div style="flex:1;height:6px;background:#1E293B;border-radius:99px;">
+      <div id="qprog-fill" style="height:100%;background:linear-gradient(90deg,#4F46E5,#818CF8);border-radius:99px;width:0%;transition:width .4s;"></div>
+    </div>
+    <div style="font-size:12px;color:#475569;min-width:36px;text-align:right" id="qprog-count">1/5</div>
+  </div>
+
+  <div class="quiz-card">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <span class="tag" id="q-subject-tag" style="background:#4F46E522;color:#818CF8">文法</span>
+      <span class="tag" id="q-grade-tag" style="background:#DC262622;color:#DC2626">必出</span>
+    </div>
+    <div class="question-text" id="q-text">問題文</div>
+    <div class="question-sub" id="q-sub"></div>
+    <div class="choices" id="choices"></div>
+  </div>
+
+  <!-- カウントダウン -->
+  <div class="countdown-wrap" id="countdown-wrap">
+    <div class="countdown-bar-bg">
+      <div class="countdown-bar-fill" id="countdown-fill" style="background:linear-gradient(90deg,#4F46E5,#818CF8);"></div>
+    </div>
+    <div class="countdown-text" id="countdown-text" style="color:#64748B;">あと <span id="countdown-num">30</span> 秒でヒント表示</div>
+  </div>
+  <div id="feedback-box" style="display:none" class="feedback-box"></div>
+  <div id="hint-area-quiz"></div>
+  <button class="btn-primary" id="quiz-next-btn" onclick="nextQuizQ()" style="display:none">次へ →</button>
+</div>
+
+<!-- ══ 書き取り画面 ══════════════════════════════════ -->
+<div id="screen-kaki" class="screen" style="overscroll-behavior:contain;">
+  <div class="row-header">
+    <button class="back-btn" onclick="showScreen('units')">←</button>
+    <div style="flex:1;height:6px;background:#1E293B;border-radius:99px;">
+      <div id="kprog-fill" style="height:100%;background:linear-gradient(90deg,#10B981,#34D399);border-radius:99px;width:0%;transition:width .4s;"></div>
+    </div>
+    <div style="font-size:12px;color:#475569;min-width:36px;text-align:right" id="kprog-count">1/5</div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <span class="tag" style="background:#10B98122;color:#34D399">書き取り</span>
+      <span class="tag" id="k-grade-tag" style="background:#DC262622;color:#DC2626">必出</span>
+    </div>
+    <div style="text-align:center;padding:10px 0 14px;">
+      <div id="k-kanji" style="font-size:76px;font-weight:900;color:#F8FAFC;line-height:1;transition:opacity .4s;">把握</div>
+      <div id="k-reading" style="font-size:14px;color:#818CF8;margin-top:8px;font-weight:700;transition:opacity .4s;">はあく</div>
+    </div>
+    <div id="k-meaning" style="color:#64748B;font-size:13px;margin-bottom:3px;"></div>
+    <div id="k-example" style="color:#334155;font-size:12px;margin-bottom:10px;"></div>
+    <button id="toggle-k-btn" onclick="toggleKSample()" style="width:100%;padding:9px;border-radius:9px;border:1px solid #334155;background:transparent;color:#64748B;font-size:13px;cursor:pointer;">👁 お手本を隠す</button>
+  </div>
+
+  <div style="margin-bottom:13px;">
+    <div style="font-size:12px;color:#475569;margin-bottom:8px;text-align:center;">✍️ 指で書いてみよう（書いている間はスクロール停止）</div>
+    <div id="canvas-zone" style="display:flex;justify-content:center;padding:8px;background:#1E293B;border-radius:18px;touch-action:none;">
+      <canvas id="drawCanvas" width="320" height="320" style="touch-action:none;"></canvas>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:9px;">
+      <button class="c-btn" onclick="clearCanvas()">🗑 消す</button>
+      <button class="c-btn" id="trace-btn" onclick="toggleTrace()">👻 薄字</button>
+      <button class="c-btn" onclick="togglePen()">✏️ 太さ</button>
+    </div>
+  </div>
+
+  <button class="hint-btn" id="k-hint-btn" onclick="loadKanjiHint()">💡 AIに覚え方を教えてもらう</button>
+  <div id="k-hint-card" style="display:none" class="hint-card-inner">
+    <div style="color:#818CF8;font-size:11px;font-weight:700;margin-bottom:7px;">✨ AI覚え方コーチ</div>
+    <div id="k-hint-tip" style="color:#C7D2FE;font-size:14px;margin-bottom:5px;"></div>
+    <div id="k-hint-story" style="color:#94A3B8;font-size:12px;margin-bottom:3px;"></div>
+    <div id="k-hint-similar" style="color:#F59E0B;font-size:12px;"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:13px;color:#94A3B8;margin-bottom:10px;font-weight:600;">書けた？正直に自己採点しよう</div>
+    <div class="judge-btns">
+      <button class="j-btn j-ok" id="j-ok" onclick="judgeKaki(true)">⭕ 書けた！</button>
+      <button class="j-btn j-ng" id="j-ng" onclick="judgeKaki(false)">❌ 書けなかった</button>
+    </div>
+  </div>
+  <button class="btn-primary" id="kaki-next-btn" onclick="nextKakiQ()" style="display:none">次へ →</button>
+</div>
+
+<!-- ══ 作文画面 ══════════════════════════════════════ -->
+<div id="screen-essay" class="screen">
+  <div class="row-header">
+    <button class="back-btn" onclick="showScreen('units')">←</button>
+    <div style="font-size:17px;font-weight:800;">✍️ 作文練習</div>
+  </div>
+  <div class="essay-prompt">
+    <div style="font-size:11px;color:#F59E0B;font-weight:700;margin-bottom:8px;">📋 作文テーマ</div>
+    <div class="essay-prompt-text" id="essay-prompt-text"></div>
+    <div id="essay-conditions"></div>
+  </div>
+
+  <textarea id="essayInput" placeholder="ここに作文を書いてください…" oninput="updateCharCount()"></textarea>
+  <div class="char-count" id="char-count">0字</div>
+
+  <button class="btn-primary" style="margin-top:12px;" onclick="submitEssay()">AIに添削してもらう ✨</button>
+  <div id="essay-feedback" style="display:none;margin-bottom:14px;" class="hint-card-inner">
+    <div style="color:#818CF8;font-size:11px;font-weight:700;margin-bottom:8px;">✨ AI添削コーチ</div>
+    <div id="essay-fb-content" style="color:#C7D2FE;font-size:14px;line-height:1.7;"></div>
+  </div>
+  <button class="btn-ghost" id="essay-next-btn" onclick="nextEssay()" style="display:none">次のテーマへ →</button>
+  <button class="btn-ghost" onclick="showScreen('units')">ユニットへ戻る</button>
+</div>
+
+<!-- ══ 結果画面 ══════════════════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="res-hero">
+    <div style="font-size:52px" id="res-emoji">🎉</div>
+    <div style="font-size:22px;font-weight:900;margin-top:8px" id="res-title">よくできました！</div>
+    <div style="font-size:13px;color:#64748B;margin-top:4px" id="res-subject-name"></div>
+  </div>
+  <div class="res-score-row">
+    <div style="text-align:center"><div class="res-val" id="rv-ok" style="color:#34D399">0</div><div class="res-lbl">正解</div></div>
+    <div style="text-align:center"><div class="res-val" id="rv-ng" style="color:#F87171">0</div><div class="res-lbl">不正解</div></div>
+    <div style="text-align:center"><div class="res-val" id="rv-pct" style="color:#818CF8">0%</div><div class="res-lbl">正答率</div></div>
+  </div>
+  <div class="wrong-block" id="wrong-block" style="display:none">
+    <div style="color:#FCA5A5;font-weight:700;font-size:13px;margin-bottom:10px;">📌 間違えた問題（次回優先出題）</div>
+    <div id="wrong-items"></div>
+  </div>
+  <div class="res-btns">
+    <button class="res-retry" onclick="retrySession()">もう一度</button>
+    <button class="res-home" onclick="goHome()">ホームへ</button>
+  </div>
+</div>
+
+<!-- ══ 統計 ══════════════════════════════════════════ -->
+<!-- ══ 静岡県対策モード ══ -->
+<div id="screen-shizuoka" class="screen">
+  <div class="row-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div>
+      <div style="font-size:17px;font-weight:800;">🗻 静岡県対策モード</div>
+      <div style="font-size:12px;color:#64748B;">大問構成に完全対応</div>
+    </div>
+  </div>
+
+  <!-- 配点マップ -->
+  <div style="background:#1E293B;border-radius:16px;padding:16px 18px;margin-bottom:14px;">
+    <div style="font-size:11px;color:#475569;font-weight:700;margin-bottom:10px;letter-spacing:1px;">▸ 本番の配点マップ（50点満点）</div>
+    <div id="shizuoka-score-map"></div>
+  </div>
+
+  <!-- 大問別練習ボタン -->
+  <div style="font-size:11px;color:#475569;font-weight:700;margin-bottom:10px;letter-spacing:1px;">▸ 大問別に練習する</div>
+  <div id="shizuoka-units"></div>
+
+  <!-- 静岡模試ボタン -->
+  <button class="btn-primary" onclick="startShizuokaMogi()" style="margin-top:4px;">
+    📝 静岡県模試（全大問・本番形式）
+  </button>
+</div>
+
+<!-- ══ 推敲画面 ══ -->
+<div id="screen-suiko" class="screen">
+  <div class="row-header">
+    <button class="back-btn" onclick="showScreen('shizuoka');renderShizuoka()">←</button>
+    <div style="flex:1;height:6px;background:#1E293B;border-radius:99px;">
+      <div id="suiko-prog" style="height:100%;background:linear-gradient(90deg,#F59E0B,#FCD34D);border-radius:99px;width:0%;transition:width .4s;"></div>
+    </div>
+    <div style="font-size:12px;color:#475569;min-width:36px;text-align:right" id="suiko-count">1/5</div>
+  </div>
+
+  <div style="background:#1E293B;border-radius:20px;padding:22px;margin-bottom:14px;">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <span class="tag" style="background:#F59E0B22;color:#FCD34D;">大問三・推敲</span>
+      <span class="tag" id="suiko-grade" style="background:#DC262622;color:#DC2626;">必出</span>
+    </div>
+    <div style="font-size:13px;color:#64748B;margin-bottom:12px;" id="suiko-situation"></div>
+    <div style="background:#0F172A;border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:14px;color:#CBD5E1;line-height:1.8;" id="suiko-passage"></div>
+    <div style="font-size:15px;font-weight:700;color:#F8FAFC;margin-bottom:14px;" id="suiko-question"></div>
+    <div class="choices" id="suiko-choices"></div>
+  </div>
+  <div id="suiko-feedback" style="display:none" class="feedback-box"></div>
+  <button class="btn-primary" id="suiko-next-btn" onclick="nextSuikoQ()" style="display:none">次へ →</button>
+</div>
+
+<div id="screen-stats" class="screen">
+  <div class="row-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div style="font-size:18px;font-weight:800;">📊 学習記録</div>
+  </div>
+  <div id="stats-content"></div>
+</div>
+
+<!-- モーダル -->
+<div class="modal-overlay" id="modal" style="display:none">
+  <div class="modal-box">
+    <div style="font-size:52px;margin-bottom:10px" id="modal-emoji">🎉</div>
+    <div style="font-size:20px;font-weight:900;margin-bottom:8px" id="modal-title"></div>
+    <div style="color:#64748B;font-size:14px;line-height:1.7;margin-bottom:18px" id="modal-body"></div>
+    <button class="btn-primary" onclick="closeModal()">OK</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+<script>
+// ══════════════════════════════════════════════════════════
+// データ定義
+// ══════════════════════════════════════════════════════════
+const SUBJECTS = [
+  { id:"kanji",   name:"漢字",   emoji:"🈴", color:"#10B981", desc:"読み・書き取り・語彙",
+    units:[
+      { id:"k1", name:"読み①基礎",    type:"quiz", count:8, grade:"1学期" },
+      { id:"k2", name:"読み②応用",    type:"quiz", count:8, grade:"2学期" },
+      { id:"k3", name:"書き取り①",    type:"kaki", count:8, grade:"1学期" },
+      { id:"k4", name:"書き取り②難",  type:"kaki", count:8, grade:"2学期" },
+      { id:"k5", name:"四字熟語",      type:"quiz", count:7, grade:"模試" },
+      { id:"k6", name:"類義語・対義語",type:"quiz", count:8, grade:"模試" },
+    ]
+  },
+  { id:"grammar", name:"文法",   emoji:"📝", color:"#F59E0B", desc:"品詞・文節・敬語",
+    units:[
+      { id:"g1", name:"品詞の見分け方",type:"quiz", count:8, grade:"1学期" },
+      { id:"g2", name:"文節の関係",    type:"quiz", count:7, grade:"2学期" },
+      { id:"g3", name:"敬語",          type:"quiz", count:7, grade:"必出" },
+      { id:"g4", name:"助詞・助動詞",  type:"quiz", count:8, grade:"模試" },
+    ]
+  },
+  { id:"kobun",   name:"古文",   emoji:"📜", color:"#818CF8", desc:"仮名遣い・古語・読解",
+    units:[
+      { id:"o1", name:"歴史的仮名遣い",type:"quiz", count:8, grade:"基礎" },
+      { id:"o2", name:"古語単語①",     type:"quiz", count:8, grade:"必出" },
+      { id:"o3", name:"古語単語②",     type:"quiz", count:8, grade:"頻出" },
+      { id:"o4", name:"古文読解",       type:"quiz", count:6, grade:"模試" },
+    ]
+  },
+  { id:"essay",   name:"作文",   emoji:"✍️", color:"#EC4899", desc:"条件作文・自由記述",
+    units:[
+      { id:"e1", name:"体験作文",       type:"essay", count:3, grade:"公立" },
+      { id:"e2", name:"意見作文",       type:"essay", count:3, grade:"公立" },
+      { id:"e3", name:"グラフ読み取り作文", type:"essay", count:3, grade:"模試" },
+    ]
+  },
+  { id:"dokkai",  name:"読解",   emoji:"📖", color:"#0EA5E9", desc:"論説文・小説・解き方",
+    units:[
+      { id:"d1", name:"論説文①指示語",  type:"quiz", count:7, grade:"基礎" },
+      { id:"d2", name:"論説文②要旨",    type:"quiz", count:6, grade:"必出" },
+      { id:"d3", name:"小説①心情",      type:"quiz", count:6, grade:"必出" },
+      { id:"d4", name:"小説②表現技法",  type:"quiz", count:6, grade:"頻出" },
+    ]
+  },
+];
+
+// ── 問題データ ──────────────────────────────────────────
+const Q = {
+  // ── 漢字 読み ──
+  k1:[
+    {q:"「把握」の読みは？",a:1,ch:["ははく","はあく","ばあく","はかく"],ex:"状況を把握する",g:"必出"},
+    {q:"「漠然」の読みは？",a:2,ch:["ばくね","はくぜん","ばくぜん","ばくそ"],ex:"漠然とした不安",g:"必出"},
+    {q:"「貢献」の読みは？",a:0,ch:["こうけん","こけん","くうけん","ごうけん"],ex:"社会に貢献する",g:"必出"},
+    {q:"「顕著」の読みは？",a:1,ch:["けんじゃ","けんちょ","げんちょ","けんちゅ"],ex:"顕著な効果",g:"必出"},
+    {q:"「培う」の読みは？",a:3,ch:["さかのう","そだてる","きわめる","つちかう"],ex:"実力を培う",g:"必出"},
+    {q:"「携わる」の読みは？",a:2,ch:["はたらく","つながる","たずさわる","かかえる"],ex:"研究に携わる",g:"頻出"},
+    {q:"「普遍」の読みは？",a:0,ch:["ふへん","ふびん","ふうへん","ふへい"],ex:"普遍的な真理",g:"頻出"},
+    {q:"「脅威」の読みは？",a:1,ch:["きょいう","きょうい","おびやかし","きゅうい"],ex:"脅威にさらされる",g:"頻出"},
+  ],
+  k2:[
+    {q:"「逡巡」の読みは？",a:2,ch:["じゅんじゅん","しゅじゅん","しゅんじゅん","じゅんしゅん"],ex:"逡巡して進めない",g:"難問"},
+    {q:"「払拭」の読みは？",a:0,ch:["ふっしょく","はらぬぐい","ふしょく","はらい"],ex:"不安を払拭する",g:"必出"},
+    {q:"「危惧」の読みは？",a:3,ch:["きおそ","きそ","おそれ","きぐ"],ex:"事態を危惧する",g:"頻出"},
+    {q:"「頓挫」の読みは？",a:1,ch:["とちゃ","とんざ","とんじゃ","とざ"],ex:"計画が頓挫する",g:"頻出"},
+    {q:"「俯瞰」の読みは？",a:0,ch:["ふかん","うえみ","ふがん","とうかん"],ex:"全体を俯瞰する",g:"必出"},
+    {q:"「翻弄」の読みは？",a:2,ch:["はんろう","ほんろ","ほんろう","はんるう"],ex:"波に翻弄される",g:"必出"},
+    {q:"「緻密」の読みは？",a:1,ch:["ちつみつ","ちみつ","きみつ","ちみち"],ex:"緻密な計画",g:"必出"},
+    {q:"「恣意」の読みは？",a:3,ch:["じい","しいた","いまま","しい"],ex:"恣意的な解釈",g:"頻出"},
+  ],
+  k5:[
+    {q:"「試行錯誤」の意味は？",a:0,ch:["繰り返し試みて解決策を見つけること","一か八かで試みること","失敗を反省すること","何も考えずに行動すること"],g:"必出"},
+    {q:"「付和雷同」の意味は？",a:2,ch:["力を合わせて取り組むこと","考えを深めること","自分の考えなく人に同調すること","素早く行動すること"],g:"頻出"},
+    {q:"「朝令暮改」の意味は？",a:1,ch:["朝早く起きること","命令や方針がすぐ変わること","一日中働くこと","慎重に考えること"],g:"頻出"},
+    {q:"「羊頭狗肉」の意味は？",a:3,ch:["動物を大切にすること","素直に生きること","誰にでも親切にすること","見かけと実質が違うこと"],g:"難問"},
+    {q:"「自縄自縛」の意味は？",a:0,ch:["自分の言動で自分が苦しむこと","自由に生きること","縄跳びが得意なこと","集中して勉強すること"],g:"頻出"},
+    {q:"「換骨奪胎」の意味は？",a:2,ch:["骨折すること","意地悪をすること","先人の作品を基に新作を作ること","体を鍛えること"],g:"難問"},
+    {q:"「一期一会」の意味は？",a:1,ch:["一生に一度の戦い","一生に一度の出会いを大切にすること","一つのことに集中すること","毎日続けること"],g:"必出"},
+  ],
+  k6:[
+    {q:"「快活」の類義語は？",a:2,ch:["暗い","静か","活発","穏やか"],g:"頻出"},
+    {q:"「具体」の対義語は？",a:0,ch:["抽象","実体","現実","具象"],g:"必出"},
+    {q:"「客観」の対義語は？",a:3,ch:["現実","中立","合理","主観"],g:"必出"},
+    {q:"「長所」の類義語は？",a:1,ch:["弱点","美点","特徴","個性"],g:"頻出"},
+    {q:"「革新」の対義語は？",a:2,ch:["進歩","改良","保守","変革"],g:"必出"},
+    {q:"「冷静」の類義語は？",a:0,ch:["沈着","熱心","積極","真剣"],g:"頻出"},
+    {q:"「縮小」の対義語は？",a:3,ch:["削減","節約","短縮","拡大"],g:"必出"},
+    {q:"「形式」の対義語は？",a:1,ch:["様式","内容","形態","外観"],g:"頻出"},
+  ],
+  // 書き取り
+  k3:[
+    {k:"就職",r:"しゅうしょく",m:"職業に就くこと",ex:"就職活動をする",g:"必出"},
+    {k:"遺産",r:"いさん",m:"後世に残される財産・文化",ex:"世界遺産を訪れる",g:"必出"},
+    {k:"象徴",r:"しょうちょう",m:"抽象的なものを具体的に表すもの",ex:"平和の象徴",g:"頻出"},
+    {k:"批判",r:"ひはん",m:"欠点を指摘して評価すること",ex:"批判的に読む",g:"必出"},
+    {k:"緊張",r:"きんちょう",m:"心や体がひきしまること",ex:"緊張して汗をかく",g:"必出"},
+    {k:"誤解",r:"ごかい",m:"まちがって理解すること",ex:"誤解を招く発言",g:"必出"},
+    {k:"革新",r:"かくしん",m:"古いものを新しくすること",ex:"技術革新が進む",g:"必出"},
+    {k:"継承",r:"けいしょう",m:"受け継ぐこと",ex:"伝統を継承する",g:"頻出"},
+  ],
+  k4:[
+    {k:"脆弱",r:"ぜいじゃく",m:"もろくて弱いこと",ex:"脆弱なシステム",g:"頻出"},
+    {k:"喚起",r:"かんき",m:"呼び起こすこと",ex:"注意を喚起する",g:"頻出"},
+    {k:"隠蔽",r:"いんぺい",m:"隠し包むこと",ex:"事実を隠蔽する",g:"必出"},
+    {k:"捏造",r:"ねつぞう",m:"事実でないことを作り上げること",ex:"証拠を捏造する",g:"必出"},
+    {k:"嗜好",r:"しこう",m:"好みのこと",ex:"食の嗜好",g:"頻出"},
+    {k:"逸脱",r:"いつだつ",m:"基準からはずれること",ex:"常識を逸脱する",g:"必出"},
+    {k:"俯瞰",r:"ふかん",m:"高い所から見下ろすこと",ex:"全体を俯瞰する",g:"必出"},
+    {k:"翻弄",r:"ほんろう",m:"思うままにもてあそぶこと",ex:"波に翻弄される",g:"必出"},
+  ],
+  // ── 文法 ──
+  g1:[
+    {q:"「美しい」の品詞は？",a:0,ch:["形容詞","形容動詞","副詞","名詞"],ex:"「〜い」で終わる→形容詞",g:"必出"},
+    {q:"「静かだ」の品詞は？",a:1,ch:["形容詞","形容動詞","動詞","副詞"],ex:"「〜だ」で終わる→形容動詞",g:"必出"},
+    {q:"「走る」の品詞は？",a:2,ch:["名詞","形容詞","動詞","副詞"],ex:"動きを表す→動詞",g:"必出"},
+    {q:"「とても」の品詞は？",a:3,ch:["接続詞","感動詞","形容詞","副詞"],ex:"用言を修飾する→副詞",g:"必出"},
+    {q:"「しかし」の品詞は？",a:0,ch:["接続詞","副詞","助詞","助動詞"],ex:"文をつなぐ→接続詞",g:"必出"},
+    {q:"「の」（連体修飾）の品詞は？",a:3,ch:["副詞","接続詞","動詞","助詞"],ex:"体言を修飾→連体修飾の助詞",g:"必出"},
+    {q:"「れる・られる」（受け身）は何？",a:1,ch:["助詞","助動詞","動詞","形容詞"],ex:"動詞に付いて意味を加える→助動詞",g:"必出"},
+    {q:"「学校」の品詞は？",a:2,ch:["動詞","形容詞","名詞","副詞"],ex:"物・事・人の名前→名詞",g:"必出"},
+  ],
+  g2:[
+    {q:"「白い雪が降る」の「白い」と「雪」の関係は？",a:0,ch:["修飾・被修飾","主語・述語","並立","補助"],ex:"「白い」が「雪」を説明している",g:"必出"},
+    {q:"「山と川」の「山」と「川」の関係は？",a:2,ch:["主語・述語","修飾・被修飾","並立","補助"],ex:"対等に並んでいる→並立",g:"頻出"},
+    {q:"「食べてしまう」の「食べて」と「しまう」の関係は？",a:3,ch:["並立","主語・述語","独立","補助"],ex:"「しまう」が補助的に意味を加える→補助",g:"必出"},
+    {q:"「彼は走る」の「彼は」と「走る」の関係は？",a:1,ch:["修飾・被修飾","主語・述語","並立","補助"],ex:"「彼は（主語）」「走る（述語）」",g:"必出"},
+    {q:"文節とは？",a:0,ch:["意味が通る最小のまとまり","単語の最小単位","品詞のまとまり","文のまとまり"],ex:"「ね」「さ」を入れて切れる単位",g:"基礎"},
+    {q:"「ゆっくり話す」の修飾・被修飾は？",a:2,ch:["「話す」が「ゆっくり」を修飾","関係なし","「ゆっくり」が「話す」を修飾","補助の関係"],g:"必出"},
+    {q:"独立語とは？",a:1,ch:["他の文節と強く関わる語","他の文節と直接関係しない語","述語になる語","主語になる語"],ex:"感動詞・呼びかけ・返事など",g:"頻出"},
+  ],
+  g3:[
+    {q:"「先生がおっしゃる」の敬語の種類は？",a:0,ch:["尊敬語","謙譲語","丁寧語","美化語"],ex:"相手の動作を高める→尊敬語",g:"必出"},
+    {q:"「私が参ります」の敬語の種類は？",a:1,ch:["尊敬語","謙譲語","丁寧語","美化語"],ex:"自分の動作をへりくだる→謙譲語",g:"必出"},
+    {q:"「食べます」の敬語の種類は？",a:2,ch:["尊敬語","謙譲語","丁寧語","美化語"],ex:"丁寧に述べる→丁寧語",g:"必出"},
+    {q:"「先生が来る」の尊敬語は？",a:3,ch:["参る","伺う","来ます","いらっしゃる"],ex:"「いらっしゃる」は来る・いる・行くの尊敬語",g:"必出"},
+    {q:"「私が食べる」の謙譲語は？",a:0,ch:["いただく","召し上がる","食べます","ご飯になる"],ex:"「いただく」は食べる・もらうの謙譲語",g:"必出"},
+    {q:"「先生が食べる」の尊敬語は？",a:1,ch:["いただく","召し上がる","食べます","いらっしゃる"],ex:"「召し上がる」は食べる・飲むの尊敬語",g:"必出"},
+    {q:"二重敬語とは？",a:2,ch:["丁寧語を2回使うこと","謙譲語と尊敬語を混ぜること","一つの語に敬語表現を重ねすぎること","敬語を使わないこと"],ex:"「おっしゃられる」など→過剰な敬語",g:"頻出"},
+  ],
+  g4:[
+    {q:"助詞「は」と「が」の違い：「猫は魚を食べる」の「は」は？",a:0,ch:["主題を示す","主語を示す","対象を示す","場所を示す"],g:"頻出"},
+    {q:"「れる・られる」の意味：「犬に噛まれる」は？",a:1,ch:["自発","受け身","可能","尊敬"],ex:"〜される→受け身",g:"必出"},
+    {q:"「れる・られる」の意味：「自然と涙が流れる」は？",a:0,ch:["自発","受け身","可能","尊敬"],ex:"自然にそうなる→自発",g:"必出"},
+    {q:"助動詞「ない」と形容詞「ない」の見分け方：「彼はここにいない」の「ない」は？",a:0,ch:["助動詞（否定）","形容詞","名詞","副詞"],ex:"「いる」に付いている→助動詞",g:"頻出"},
+    {q:"「たい」（〜したい）の品詞は？",a:1,ch:["形容詞","助動詞","副詞","動詞"],ex:"動詞に付いて意味を加える→助動詞",g:"必出"},
+    {q:"格助詞「で」の意味：「公園で遊ぶ」の「で」は？",a:2,ch:["手段","原因","場所","材料"],g:"頻出"},
+    {q:"「だろう」の意味：「明日は晴れだろう」は？",a:0,ch:["推量","命令","過去","否定"],ex:"〜と思う→推量",g:"必出"},
+    {q:"「そうだ」の意味：「雨が降りそうだ」は？",a:1,ch:["伝聞","様態","推量","命令"],ex:"見た感じそうだ→様態",g:"必出"},
+  ],
+  // ── 古文 ──
+  o1:[
+    {q:"「ゐる」の現代仮名遣いは？",a:0,ch:["いる","うる","える","おる"],ex:"「ゐ」→「い」",g:"基礎"},
+    {q:"「をかし」の現代仮名遣いは？",a:2,ch:["おかしい","おかし","をかし→おかし","うかし"],ex:"語頭以外の「を」→「お」",g:"基礎"},
+    {q:"「あはれ」の現代仮名遣いは？",a:1,ch:["ああれ","あわれ","あはれ","あはれ→あああれ"],ex:"「は行」音→「わ行」",g:"基礎"},
+    {q:"「えうなし」の現代仮名遣いは？",a:3,ch:["えうなし","ようなし","えおなし","ようなし（正：ようなし）"],a:1,ch:["えいなし","ようなし","えおなし","えうなし"],ex:"「えう」→「よう」",g:"基礎"},
+    {q:"「おもひ」の現代仮名遣いは？",a:2,ch:["おもい（別）","おもひ","おもい","おもえ"],a:0,ch:["おもい","おもひ","おもえ","おもう"],ex:"「ひ」→「い」",g:"基礎"},
+    {q:"「むかし」は現代語で？",a:0,ch:["昔","今","未来","以前"],g:"基礎"},
+    {q:"歴史的仮名遣い「ぢ」は現代では？",a:1,ch:["ち（まま）","じ","ぢ（まま）","ず"],g:"基礎"},
+    {q:"「けふ」の現代仮名遣いは？",a:2,ch:["けう","きょ","きょう","けふ（まま）"],ex:"「けふ」→「きょう」",g:"基礎"},
+  ],
+  o2:[
+    {q:"古語「いみじ」の意味は？",a:0,ch:["とても（ひどい・すばらしい）","悲しい","怖い","美しい"],ex:"程度がはなはだしい",g:"必出"},
+    {q:"古語「あはれ」の意味は？",a:1,ch:["おかしい","しみじみとした感動","怖い","楽しい"],ex:"枕草子・源氏物語で頻出",g:"必出"},
+    {q:"古語「をかし」の意味は？",a:2,ch:["悲しい","怖い","趣深い・おもしろい","美しい"],ex:"枕草子のキーワード",g:"必出"},
+    {q:"古語「なむ」（係り結び）の結びの形は？",a:0,ch:["連体形","終止形","已然形","命令形"],ex:"「なむ」→連体形で結ぶ",g:"頻出"},
+    {q:"古語「侍り（はべり）」の意味は？",a:3,ch:["行く","来る","食べる","あります（丁寧）"],ex:"丁寧の補助動詞",g:"頻出"},
+    {q:"古語「げに」の意味は？",a:1,ch:["たしかに（違う）","なるほど・本当に","少し","とても"],ex:"「なるほど」の意味",g:"頻出"},
+    {q:"「係り結びの法則」とは？",a:2,ch:["主語と述語の呼応","修飾語と被修飾語の呼応","係助詞と文末の語形が呼応すること","敬語の使い方"],g:"必出"},
+    {q:"古語「やがて」の意味は？",a:0,ch:["すぐに","しばらくして","やがて（現代と同じ）","ゆっくり"],ex:"現代語と意味が異なる注意語",g:"必出"},
+  ],
+  o3:[
+    {q:"古語「おぼゆ」の意味は？",a:1,ch:["忘れる","思われる・感じられる","喜ぶ","悲しむ"],ex:"自然と感じられる",g:"頻出"},
+    {q:"古語「こそ」（係り結び）の結びの形は？",a:3,ch:["連体形","未然形","終止形","已然形"],ex:"「こそ」→已然形で結ぶ",g:"必出"},
+    {q:"古語「たまふ」の意味は？",a:0,ch:["〜なさる（尊敬の補助動詞）","〜ください","いただく","与える"],ex:"貴人の動作に付く尊敬語",g:"頻出"},
+    {q:"古文で「春はあけぼの」の「は」は？",a:2,ch:["主語","対象","主題（〜といえば）","場所"],g:"頻出"},
+    {q:"古語「ものす」の意味は？",a:1,ch:["食べる","する・いる・行くなど（代動詞）","来る","帰る"],ex:"様々な動作を表す万能動詞",g:"難問"},
+    {q:"古語「あさまし」の意味は？",a:3,ch:["浅い","朝らしい","楽しい","驚きあきれる"],ex:"現代語「あさましい」と少し違う",g:"頻出"},
+    {q:"「春の夜の夢」で有名な作品は？",a:0,ch:["枕草子","源氏物語","竹取物語","平家物語"],ex:"清少納言の随筆",g:"基礎"},
+    {q:"「祇園精舎の鐘の声」で始まる作品は？",a:3,ch:["枕草子","源氏物語","竹取物語","平家物語"],ex:"諸行無常の響きあり",g:"必出"},
+  ],
+  o4:[
+    {q:"「昔、男ありけり」→「ありけり」の意味は？",a:1,ch:["いなかった","（昔）あった・いた","いる","あった（今も）"],ex:"「けり」は過去の助動詞",g:"必出"},
+    {q:"古文で心情を問う問題：登場人物の気持ちを表す語は？",a:0,ch:["思ひ・なげき・うれし","走る・食べる・寝る","山・川・海","春・夏・秋"],ex:"感情語に注目する",g:"必出"},
+    {q:"古文読解：「いづれの御時にか」→「いづれ」は？",a:2,ch:["どこ","誰","どの・いつ","なぜ"],ex:"疑問詞「いづれ」",g:"頻出"},
+    {q:"古文の主語はどう見分ける？",a:1,ch:["文の最初の名詞","「は・が・も」に注目＋文脈","すべて1人称","助動詞から判断"],ex:"省略が多い→文脈と助詞で判断",g:"必出"},
+    {q:"「なりけり」の「なり」の意味は？",a:0,ch:["〜である（断定）","〜のようだ","〜になった","〜ない"],ex:"断定の助動詞「なり」",g:"頻出"},
+    {q:"古文で「をかしと思ひたまへり」の主語の敬意は？",a:2,ch:["読者→登場人物","筆者→読者","筆者→登場人物（高い身分）","登場人物→筆者"],ex:"「たまへ」は尊敬の補助動詞",g:"難問"},
+  ],
+  // ── 読解 ──
+  d1:[
+    {q:"指示語「この」「その」「あの」の違い：話し手から遠い方を指すのは？",a:2,ch:["この","その","あの","どの"],ex:"こそあど言葉：近・中・遠・不明",g:"基礎"},
+    {q:"「それ」が指す内容を探すときは？",a:0,ch:["直前の文・語句を探す","直後を探す","段落の最初を見る","最後の文を見る"],ex:"指示語は直前の内容を指すことが多い",g:"必出"},
+    {q:"「このように」という指示語が文中にある→直前は？",a:1,ch:["問いの文","まとめ・結論","例","反対意見"],ex:"「このように」は前の内容をまとめる",g:"必出"},
+    {q:"接続詞「したがって」の後には何が来る？",a:2,ch:["逆の内容","例","結論・まとめ","理由"],ex:"順接→前の内容の結果・結論",g:"必出"},
+    {q:"接続詞「しかし」「ところが」の後には？",a:0,ch:["前と逆の内容","同じ内容","例","まとめ"],ex:"逆接→前の内容と反対",g:"必出"},
+    {q:"接続詞「例えば」の後には？",a:3,ch:["まとめ","逆の意見","結論","具体例"],ex:"例示→具体的な内容が続く",g:"必出"},
+    {q:"「傍線部の内容を説明せよ」→どこを見る？",a:1,ch:["文章の最初","傍線部の前後","最後の段落","タイトル"],ex:"傍線部の前後に根拠がある",g:"必出"},
+  ],
+  d2:[
+    {q:"論説文の「筆者の主張」を探すコツは？",a:0,ch:["「〜と思う」「〜べきだ」など主張表現を探す","登場人物の言葉を探す","難しい言葉を探す","最初の一文を見る"],g:"必出"},
+    {q:"論説文で「問い→答え」の構造を見つけるには？",a:2,ch:["難しい語を探す","筆者の名前を調べる","「〜だろうか」「〜ではないか」を探す","改行の位置を見る"],g:"必出"},
+    {q:"「要旨」とは？",a:1,ch:["文章の最初の一文","文章全体で言いたい最も重要なこと","登場人物の気持ち","難しい語句の意味"],g:"必出"},
+    {q:"段落の役割：具体例が書かれた段落の働きは？",a:3,ch:["主張","まとめ","問い","主張の根拠・説明"],ex:"具体例は主張を支えるために使われる",g:"必出"},
+    {q:"論説文で「対比」を使う目的は？",a:0,ch:["筆者の主張を際立たせるため","話を長くするため","読者を混乱させるため","反論するため"],ex:"Aに対してBを並べる→主張が明確になる",g:"頻出"},
+    {q:"「換言（言い換え）」を示す接続表現は？",a:2,ch:["しかし","なぜなら","つまり・すなわち","例えば"],ex:"「つまり」の後＝前の内容の言い換え・まとめ",g:"必出"},
+  ],
+  d3:[
+    {q:"小説で登場人物の「心情」を探すコツは？",a:0,ch:["行動・セリフ・情景描写に注目","筆者の名前を調べる","難しい語句を調べる","段落数を数える"],ex:"直接書かれない心情→行動や言葉に表れる",g:"必出"},
+    {q:"「彼は黙って窓の外を見た」→この行動から読み取れるのは？",a:2,ch:["楽しんでいる","眠い","何か悩んでいる・悲しんでいる","空腹","怒り"],a:1,ch:["楽しんでいる","悩んでいる・悲しんでいる","空腹","眠い"],ex:"黙る・視線を逸らす→ネガティブな感情が多い",g:"必出"},
+    {q:"小説で「情景描写」が使われる目的は？",a:0,ch:["登場人物の心情を象徴的に表現するため","場所を正確に伝えるため","時間を知らせるため","天気を説明するため"],ex:"暗い空→悲しい心情など",g:"必出"},
+    {q:"「心情の変化」を問う問題の解き方は？",a:2,ch:["最初の段落だけ読む","ラストだけ見る","変化のきっかけとなる出来事を探す","登場人物の名前を確認する"],g:"必出"},
+    {q:"セリフの前後に注目すべき理由は？",a:1,ch:["文字数を増やすため","心情が直接・間接に表れるため","文法の勉強のため","段落の始まりだから"],g:"必出"},
+    {q:"小説の「クライマックス」を見つけるには？",a:3,ch:["最初の場面","登場人物が多い場面","説明が長い部分","感情・行動が最も大きく変化する場面"],g:"頻出"},
+  ],
+  d4:[
+    {q:"「擬人法」とは？",a:0,ch:["人でないものを人のように表現する","比喩を使わない表現","繰り返しを使う表現","色を使った表現"],ex:"「風が笑う」→風を人のように",g:"必出"},
+    {q:"「倒置法」とは？",a:2,ch:["同じ言葉を繰り返す","比喩を使う","語順を逆にして強調する","省略する"],ex:"「きれいだ、この花が」→強調",g:"必出"},
+    {q:"「直喩」と「隠喩（暗喩）」の違いは？",a:1,ch:["直喩は短い","直喩は「〜のような」と明示、隠喩は「〜だ」と言い切る","どちらも同じ","隠喩の方が弱い表現"],g:"必出"},
+    {q:"「反復法」とは？",a:3,ch:["逆のことを言う","人のように表現する","語順を逆にする","同じ言葉・表現を繰り返して強調する"],ex:"「雨、雨、降れ降れ」",g:"頻出"},
+    {q:"「体言止め」の効果は？",a:0,ch:["余韻・強調・テンポを生む","丁寧な印象","柔らかい印象","長い説明ができる"],ex:"名詞で文を終える→余韻が生まれる",g:"必出"},
+    {q:"「対句（ついく）」とは？",a:2,ch:["反対の内容を書く","同じ言葉を繰り返す","対応する語を並べてリズムを作る","疑問形にする"],ex:"「春の花 秋の月」のように並べる",g:"頻出"},
+  ],
+  // ── 作文テーマ ──
+  e1:[
+    {theme:"あなたが中学生活で最も成長したと感じた経験について書いてください。",conditions:["150字以上200字以内","自分の考えを明確に述べること","体験を具体的に書くこと"],minChar:150,maxChar:200},
+    {theme:"「失敗から学ぶ」という言葉について、自分の体験をふまえて考えを書いてください。",conditions:["120字以上180字以内","失敗した体験を具体的に書くこと","そこから学んだことを書くこと"],minChar:120,maxChar:180},
+    {theme:"あなたが大切にしている「もの」や「こと」について、その理由とともに書いてください。",conditions:["150字以上200字以内","理由を2つ以上挙げること"],minChar:150,maxChar:200},
+  ],
+  e2:[
+    {theme:"「スマートフォンは中学生に必要か」について、あなたの意見を書いてください。",conditions:["150字以上200字以内","賛成か反対かを明確にすること","理由を具体的に述べること"],minChar:150,maxChar:200},
+    {theme:"「読書は大切か」について、あなたの意見を書いてください。",conditions:["120字以上180字以内","自分の立場を明確にすること","反対意見も考慮すること"],minChar:120,maxChar:180},
+    {theme:"「学校制服は必要か」について、賛否いずれかの立場で意見を述べてください。",conditions:["150字以上200字以内","理由を2つ以上挙げること","具体例を入れること"],minChar:150,maxChar:200},
+  ],
+  e3:[
+    {theme:"次のグラフは「中学生の一日のスマートフォン使用時間」を示しています。グラフから読み取れることをふまえ、あなたの考えを書いてください。\n📊 [グラフの想定：1時間未満15%、1〜2時間32%、2〜3時間28%、3時間以上25%]",conditions:["150字以上200字以内","グラフから読み取れる特徴を必ず入れること","自分の意見を書くこと"],minChar:150,maxChar:200},
+    {theme:"次のデータは「中学生がストレスを感じる原因」を示しています。読み取れることをふまえ、あなたの考えを書いてください。\n📊 [1位：勉強・成績(45%) 2位：友人関係(32%) 3位：部活(13%) 4位：その他(10%)]",conditions:["150字以上200字以内","上位2項目について触れること","解決策や考えを述べること"],minChar:150,maxChar:200},
+    {theme:"「地域のボランティア活動への中学生参加率」が減少しているというデータをふまえ、あなたの考えを書いてください。\n📊 [10年前:68% → 現在:31%]",conditions:["120字以上200字以内","データの数字を引用すること","原因または改善策を述べること"],minChar:120,maxChar:200},
+  ],
+};
+
+// ══ ストレージ ════════════════════════════════════════════
+const ls={
+  get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+};
+let weakMap=ls.get("nm_weak",{});        // "subj_idx" -> count
+let clearedUnits=new Set(ls.get("nm_cleared",[]));
+let streak=ls.get("nm_streak",0);
+let totalOk=ls.get("nm_totalOk",0);
+
+(()=>{
+  const today=new Date().toDateString(),last=ls.get("nm_lastDate",""),yest=new Date(Date.now()-86400000).toDateString();
+  if(last===today)return;
+  streak=(last===yest)?streak+1:1;
+  ls.set("nm_streak",streak);ls.set("nm_lastDate",today);
+})();
+
+// ══ 状態 ══════════════════════════════════════════════════
+let curSubj=null,curUnit=null,quizDeck=[],quizIdx=0,quizResults=[];
+let kakiDeck=[],kakiIdx=0,kakiResults=[],kakiJudged=false;
+let kakiSampleVis=true,traceOn=false,penBig=true,drawing=false,lx=0,ly=0;
+let essayDeck=[],essayIdx=0,curSessionMode="normal";
+
+
+// ══ カウントダウン（30秒でヒント自動表示） ══════════════
+let countdownTimer = null;
+let countdownSec = 30;
+
+function startCountdown() {
+  clearCountdown();
+  countdownSec = 30;
+  const fill = document.getElementById("countdown-fill");
+  const num  = document.getElementById("countdown-num");
+  const text = document.getElementById("countdown-text");
+  const wrap = document.getElementById("countdown-wrap");
+  if (!fill || !wrap) return;
+
+  wrap.style.display = "block";
+  fill.style.transition = "none";
+  fill.style.width = "100%";
+  fill.style.background = "linear-gradient(90deg,#4F46E5,#818CF8)";
+  num.textContent = 30;
+  text.style.color = "#64748B";
+
+  // force reflow so transition kicks in
+  fill.getBoundingClientRect();
+  fill.style.transition = "width 1s linear";
+
+  countdownTimer = setInterval(() => {
+    countdownSec--;
+    const pct = (countdownSec / 30) * 100;
+    fill.style.width = pct + "%";
+    num.textContent = countdownSec;
+
+    if (countdownSec <= 5) {
+      fill.style.background = "linear-gradient(90deg,#F59E0B,#EF4444)";
+      text.style.color = "#F59E0B";
+      text.innerHTML = "⚠️ あと <span id=\"countdown-num\">" + countdownSec + "</span> 秒でヒント表示";
+    } else {
+      text.innerHTML = "あと <span id=\"countdown-num\">" + countdownSec + "</span> 秒でヒント表示";
+    }
+
+    if (countdownSec <= 0) {
+      clearCountdown();
+      showAutoHint();
+    }
+  }, 1000);
+}
+
+function clearCountdown() {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  const wrap = document.getElementById("countdown-wrap");
+  if (wrap) wrap.style.display = "none";
+}
+
+function showAutoHint() {
+  const q = quizDeck[quizIdx];
+  if (!q) return;
+  const area = document.getElementById("hint-area-quiz");
+  if (!area || area.innerHTML !== "") return; // already shown
+  area.innerHTML = `
+    <div style="background:#1E1B3A;border:1px solid #F59E0B44;border-radius:14px;padding:14px 16px;margin-bottom:13px;">
+      <div style="color:#F59E0B;font-size:11px;font-weight:700;margin-bottom:7px;">💡 30秒ヒント（自動表示）</div>
+      <div style="color:#C7D2FE;font-size:14px;">${q.ex || "例文・解説なし"}</div>
+    </div>`;
+}
+
+
+// ══════════════════════════════════════════════════════════
+// 静岡県対策データ
+// ══════════════════════════════════════════════════════════
+const SHIZUOKA_UNITS = [
+  { id:"sz1", name:"大問一 文学的文章", desc:"心情変化・記述・表現技法", points:14, icon:"📖", color:"#10B981",
+    qkeys:["d3","d4"], tip:"主人公の心情変化がきっかけの前後でどう変わったかに注目！"},
+  { id:"sz2", name:"大問二 説明的文章", desc:"筆者の主張・接続詞・品詞", points:14, icon:"📄", color:"#0EA5E9",
+    qkeys:["d1","d2","g1"], tip:"対比構造を見つけて筆者の主張を際立たせている部分を探す！"},
+  { id:"sz3", name:"大問三 発表原稿の推敲", desc:"敬語・受け身・慣用句・添削", points:9, icon:"✏️", color:"#F59E0B",
+    qkeys:["suiko"], tip:"敬語・受け身・慣用句は毎年必出！パターンを覚えれば確実に得点できる！"},
+  { id:"sz4", name:"大問四 古文の読解", desc:"仮名遣い・古語・係り結び", points:7, icon:"📜", color:"#818CF8",
+    qkeys:["o1","o2"], tip:"「けり」「なり」「たまふ」など頻出の助動詞・敬語を覚えよう！"},
+  { id:"sz5", name:"大問五 課題作文", desc:"条件作文・意見文・グラフ読み取り", points:6, icon:"✍️", color:"#EC4899",
+    qkeys:["e1","e2","e3"], tip:"150〜200字・自分の意見＋理由2つ・具体例の型を身につけよう！"},
+];
+
+// 推敲問題データ（静岡県大問三 完全特化）
+const SUIKO_Q = [
+  {
+    situation:"中学校の生徒会が、新入生向けの「学校紹介の発表」の原稿を作成しています。次の原稿の下線部について考えてください。",
+    passage:"皆さん、こんにちは。私たちの学校では、毎年多くの行事が①行われます。特に体育祭は、全校生徒が②楽しみにしてる一大イベントです。ぜひ③一緒に盛り上げましょう。",
+    q:"下線部②「楽しみにしてる」を正しい表現に直したものはどれですか？",
+    a:1, ch:["楽しみにしている","楽しみにしております","楽しみにされている","楽しみになっている"],
+    ex:"「〜してる」は「〜している」の省略形。丁寧な発表では正しい形に直す。", g:"必出"
+  },
+  {
+    situation:"学校の放送委員が、お昼の放送で読む原稿を作っています。先生に向けた内容が含まれています。",
+    passage:"本日の給食についてお知らせします。今日のメニューはカレーライスです。調理員の皆さんが①朝早くから作ってくれました。先生方もぜひ②食べてください。明日は②の予定です。",
+    q:"下線部②「食べてください」を先生方への適切な敬語に直すとどれですか？",
+    a:2, ch:["食べられてください","いただいてください","召し上がってください","食べになってください"],
+    ex:"先生の動作→尊敬語「召し上がる」を使う。「いただく」は自分の動作の謙譲語。", g:"必出"
+  },
+  {
+    situation:"部活動紹介の発表原稿です。文章の流れと表現を確認してください。",
+    passage:"私たちの吹奏楽部は、毎日放課後に練習しています。最初は楽器を①うまく弾けなかった部員も、今では堂々と演奏できるようになりました。努力が②（　）という言葉の通りです。",
+    q:"②（　）に入る慣用句として最も適切なものはどれですか？",
+    a:0, ch:["実を結ぶ","水の泡になる","頭が上がらない","手を焼く"],
+    ex:"努力の成果が出た→「実を結ぶ」。「水の泡」は努力が無駄になること。", g:"必出"
+  },
+  {
+    situation:"生徒会長が全校集会で読む挨拶原稿の一部です。受け身の表現に注目してください。",
+    passage:"先週の清掃活動では、多くの生徒が参加し、校内がきれいになりました。地域の方々からも①お褒めの言葉をいただきました。この活動は②（　）伝統として、これからも続けていきたいと思います。",
+    q:"②（　）に「受け継ぐ」を受け身の形にして入れると？",
+    a:3, ch:["受け継いで","受け継がれて","受け継がせられて","受け継がれてきた"],
+    ex:"受け身「〜れる・られる」＋継続「〜てきた」→「受け継がれてきた」", g:"頻出"
+  },
+  {
+    situation:"図書委員が読書週間について発表する原稿を作っています。文章の添削をしてください。",
+    passage:"読書週間中は、図書室の貸し出し冊数が①普段の約3倍になります。本を読むことで、語彙力や想像力が②高まることができます。皆さんもぜひ読書の習慣を③身に付けてください。",
+    q:"下線部②「高まることができます」の表現として適切に直したものはどれですか？",
+    a:1, ch:["高まることがあります","高まります","高めることができます","高まるかもしれません"],
+    ex:"「高まる」は自動詞なので「〜ことができる（可能）」とは結びつかない。「高まります」が正しい。", g:"必出"
+  },
+  {
+    situation:"環境委員会が学校のエコ活動について発表する原稿です。",
+    passage:"私たちの学校では、節電や節水などのエコ活動に①取り組んでいます。昨年度は電気使用量を前年比10%②削ることができました。この調子で③環境にやさしい学校を目指しましょう。",
+    q:"下線部②「削ること」をより適切な表現に直すとどれですか？",
+    a:2, ch:["削除すること","少なくすること","削減すること","少なくなること"],
+    ex:"報告文では「削る」より「削減する」などの改まった表現が適切。", g:"頻出"
+  },
+  {
+    situation:"文化祭の劇の司会原稿です。観客への呼びかけが含まれています。",
+    passage:"本日は文化祭にお越し①いただき、ありがとうございます。これより演劇部の発表が②始めます。どうぞ最後まで③ご覧ください。",
+    q:"下線部②「始めます」を適切な表現に直すとどれですか？",
+    a:0, ch:["始まります","始められます","始めさせます","お始めします"],
+    ex:"「始める」は他動詞（誰かが始める）。劇が自然に始まる→自動詞「始まる」が正しい。", g:"必出"
+  },
+  {
+    situation:"体育委員が運動会のルール説明をする原稿の一部です。",
+    passage:"競技中に①転んだり怪我をした場合は、すぐに審判に②知らせて下さい。審判は白い帽子を③かぶっている人です。安全に競技を楽しみましょう。",
+    q:"下線部②「知らせて下さい」の表記として正しいものはどれですか？",
+    a:1, ch:["知らせて下さい（このままでよい）","知らせてください（ひらがな）","お知らせ下さい","知らせなさい"],
+    ex:"「ください」が補助動詞のとき→ひらがな「ください」と書く。漢字「下さい」は「与えてください」の意味のとき。", g:"頻出"
+  },
+];
+
+// ══ 静岡県対策 状態 ══
+let suikoDeck=[], suikoIdx=0, suikoResults=[];
+let szMogiMode=false;
+
+// ══ 静岡県対策 画面描画 ══
+function renderShizuoka(){
+  // 配点マップ
+  const map = document.getElementById("shizuoka-score-map");
+  if(map){
+    const total = SHIZUOKA_UNITS.reduce((s,u)=>s+u.points,0);
+    map.innerHTML = SHIZUOKA_UNITS.map(u=>{
+      const pct = Math.round(u.points/total*100);
+      const barW = Math.round(u.points/14*100);
+      return `<div style="margin-bottom:9px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+          <span style="color:#F8FAFC;font-weight:600;">${u.icon} ${u.name.replace("大問","").split(" ")[0]}${u.name.split(" ").slice(1).join(" ")}</span>
+          <span style="color:${u.color};font-weight:800;">${u.points}点</span>
+        </div>
+        <div style="height:6px;background:#334155;border-radius:99px;">
+          <div style="height:100%;width:${barW}%;background:${u.color};border-radius:99px;"></div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  // 大問別ボタン
+  const ul = document.getElementById("shizuoka-units");
+  if(ul){
+    ul.innerHTML = SHIZUOKA_UNITS.map(u=>`
+      <div onclick="startShizuokaUnit('${u.id}')" style="
+        background:#1E293B;border-radius:14px;padding:14px 16px;margin-bottom:9px;
+        cursor:pointer;display:flex;align-items:center;gap:12px;
+        border:1.5px solid ${u.color}22;">
+        <div style="width:44px;height:44px;border-radius:12px;background:${u.color}22;
+          display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${u.icon}</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:15px;color:#F8FAFC;">${u.name}</div>
+          <div style="font-size:11px;color:#64748B;margin-top:2px;">${u.desc} · ${u.points}点配点</div>
+          <div style="font-size:11px;color:${u.color};margin-top:4px;">💡 ${u.tip.slice(0,24)}…</div>
+        </div>
+        <div style="color:${u.color};font-size:18px;font-weight:800;">›</div>
+      </div>`).join("");
+  }
+}
+
+function startShizuokaUnit(uid){
+  const unit = SHIZUOKA_UNITS.find(u=>u.id===uid);
+  if(!unit) return;
+
+  if(uid === "sz3"){
+    // 推敲専用画面
+    suikoDeck = [...SUIKO_Q].sort(()=>Math.random()-.5).slice(0,6);
+    suikoIdx=0; suikoResults=[];
+    loadSuikoQ();
+    showScreen("suiko");
+  } else {
+    // 既存クイズ画面を使う
+    curSubj = { emoji: unit.icon, name: unit.name, id: uid };
+    // 複数qkeysをマージ
+    let pool = [];
+    unit.qkeys.forEach(k=>{ (Q[k]||[]).forEach((q,i)=>pool.push({...q,origIdx:i,uid:k})); });
+    quizDeck = pool.sort(()=>Math.random()-.5).slice(0,8);
+    quizIdx=0; quiRes=[];quizResults=[];
+    // 作文の場合
+    if(uid==="sz5"){
+      curUnit={id:"e1",name:unit.name,count:3,type:"essay"};
+      startEssay("e1"); return;
+    }
+    curUnit={id:uid,name:unit.name,count:quizDeck.length,type:"quiz"};
+    loadQuizQ();
+    showScreen("quiz");
+  }
+}
+
+function startShizuokaMogi(){
+  // 全大問から2問ずつ・推敲2問・計10問
+  const pool=[];
+  ["d3","d1","g3","o1","o2"].forEach(k=>{
+    const qs=Q[k]||[];
+    const picked=qs.sort(()=>Math.random()-.5).slice(0,2);
+    picked.forEach((q,i)=>pool.push({...q,origIdx:i,uid:k}));
+  });
+  quizDeck = pool.sort(()=>Math.random()-.5).slice(0,8);
+  // 推敲2問追加
+  const suiko2 = [...SUIKO_Q].sort(()=>Math.random()-.5).slice(0,2).map(q=>({
+    q:q.q, a:q.a, ch:q.ch, ex:q.ex, g:q.g, origIdx:0, uid:"suiko"
+  }));
+  quizDeck = [...quizDeck, ...suiko2];
+  quizIdx=0; quizResults=[];
+  curSubj={emoji:"🗻",name:"静岡県模試",id:"sz_mogi"};
+  curUnit={id:"sz_mogi",name:"静岡県模試",count:quizDeck.length,type:"quiz"};
+  loadQuizQ(); showScreen("quiz");
+}
+
+// ══ 推敲問題 ══
+function loadSuikoQ(){
+  const q=suikoDeck[suikoIdx];
+  document.getElementById("suiko-prog").style.width=((suikoIdx/suikoDeck.length)*100)+"%";
+  document.getElementById("suiko-count").textContent=(suikoIdx+1)+"/"+suikoDeck.length;
+  const gc=gradeColor(q.g);
+  const gt=document.getElementById("suiko-grade");
+  gt.textContent=q.g;gt.style.color=gc;gt.style.background=gc+"22";
+  document.getElementById("suiko-situation").textContent="📋 場面："+q.situation;
+  document.getElementById("suiko-passage").innerHTML=q.passage.replace(/①|②|③/g,m=>`<span style="color:#FCD34D;font-weight:800;">${m}</span>`);
+  document.getElementById("suiko-question").textContent="問："+q.q;
+  const div=document.getElementById("suiko-choices");
+  div.innerHTML=q.ch.map((ch,i)=>`<button class="choice-btn" id="sch-${i}" onclick="answerSuiko(${i})">${ch}</button>`).join("");
+  document.getElementById("suiko-feedback").style.display="none";
+  document.getElementById("suiko-next-btn").style.display="none";
+  startCountdown();
+}
+
+function answerSuiko(chosen){
+  clearCountdown();
+  const q=suikoDeck[suikoIdx];
+  const ok=chosen===q.a;
+  q.ch.forEach((_,i)=>{
+    const b=document.getElementById("sch-"+i);
+    b.disabled=true;
+    if(i===q.a) b.classList.add(ok&&i===chosen?"correct":"show-correct");
+    else if(i===chosen&&!ok) b.classList.add("wrong");
+  });
+  const fb=document.getElementById("suiko-feedback");
+  fb.style.display="block";
+  fb.className="feedback-box "+(ok?"feedback-correct":"feedback-wrong");
+  fb.innerHTML=(ok?"🎉 正解！":"❌ 正解：「"+q.ch[q.a]+"」")+"<br><span style='font-size:12px;opacity:.8'>"+q.ex+"</span>";
+  suikoResults.push({q,ok});
+  document.getElementById("suiko-next-btn").style.display="block";
+  document.getElementById("suiko-next-btn").textContent=suikoIdx+1>=suikoDeck.length?"結果を見る 📊":"次へ →";
+}
+
+function nextSuikoQ(){
+  clearCountdown();
+  if(suikoIdx+1>=suikoDeck.length){
+    const ok=suikoResults.filter(r=>r.ok).length;
+    const pct=Math.round(ok/suikoResults.length*100);
+    curSubj={emoji:"✏️",name:"大問三 発表原稿の推敲",id:"sz3"};
+    showResult(ok,suikoResults.length,pct,suikoResults.filter(r=>!r.ok).map(r=>({q:r.q.q,a:r.q.ch[r.q.a]})));
+    return;
+  }
+  suikoIdx++;loadSuikoQ();
+}
+
+// window登録
+window.renderShizuoka=renderShizuoka;
+window.startShizuokaUnit=startShizuokaUnit;
+window.startShizuokaMogi=startShizuokaMogi;
+window.answerSuiko=answerSuiko;
+window.nextSuikoQ=nextSuikoQ;
+
+// ══ ホーム ════════════════════════════════════════════════
+function updateHome(){
+  document.getElementById("streak-badge").textContent="🔥 "+streak+"日連続";
+
+  // 全体進捗
+  const allUnits=SUBJECTS.flatMap(s=>s.units);
+  const doneUnits=allUnits.filter(u=>clearedUnits.has(u.id)).length;
+  const pct=Math.round(doneUnits/allUnits.length*100);
+  const ring=document.getElementById("overall-ring");
+  const circ=2*Math.PI*28;
+  ring.style.strokeDashoffset=circ*(1-pct/100);
+  document.getElementById("overall-pct").textContent=pct+"%";
+  document.getElementById("overall-detail").textContent=doneUnits+"/"+allUnits.length+"ユニット完了";
+
+  // タグ
+  const tags=document.getElementById("home-tags");
+  tags.innerHTML=SUBJECTS.map(s=>{
+    const done=s.units.filter(u=>clearedUnits.has(u.id)).length;
+    return `<span class="tag" style="background:${s.color}22;color:${s.color}">${s.emoji}${done}/${s.units.length}</span>`;
+  }).join("");
+
+  // 科目カード
+  const sc=document.getElementById("subject-cards");
+  sc.innerHTML=SUBJECTS.map(s=>{
+    const done=s.units.filter(u=>clearedUnits.has(u.id)).length;
+    const p=Math.round(done/s.units.length*100);
+    return `<div class="subject-card" onclick="openSubject('${s.id}')">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="subject-icon" style="background:${s.color}22">${s.emoji}</div>
+        <div style="flex:1"><div class="subject-name">${s.name}</div><div class="subject-desc">${s.desc}</div></div>
+        <div class="subject-pct" style="color:${s.color}">${p}%</div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${s.color}"></div></div>
+    </div>`;
+  }).join("");
+
+  // 苦手ボタン
+  const wk=Object.keys(weakMap).filter(k=>weakMap[k]>0).length;
+  const wb=document.getElementById("weak-btn-home");
+  if(wk>0){wb.style.display="block";wb.textContent="🎯 苦手だけ集中特訓（"+wk+"問）";}
+  else wb.style.display="none";
+}
+
+// ══ 科目→ユニット ══════════════════════════════════════════
+function openSubject(sid){
+  curSubj=SUBJECTS.find(s=>s.id===sid);
+  document.getElementById("units-title").textContent=curSubj.emoji+" "+curSubj.name;
+  document.getElementById("units-desc").textContent=curSubj.desc;
+  const ul=document.getElementById("units-list");
+  ul.innerHTML=curSubj.units.map((u,i)=>{
+    const cleared=clearedUnits.has(u.id);
+    const locked=i>0&&!clearedUnits.has(curSubj.units[i-1].id)&&!cleared;
+    const numBg=cleared?"#10B98122":"#334155",numColor=cleared?"#34D399":"#64748B";
+    return `<div class="unit-card ${locked?"locked":""} ${cleared?"cleared":""}" onclick="${locked?"":"startUnit('"+u.id+"')"}">
+      <div class="unit-num" style="background:${numBg};color:${numColor}">${i+1}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:15px;color:#F8FAFC">${u.name}</div>
+        <div style="font-size:12px;color:#64748B;margin-top:2px">${u.grade} · ${u.count}問</div></div>
+      <div style="font-size:18px">${locked?"🔒":cleared?"✅":"▶️"}</div>
+    </div>`;
+  }).join("");
+  showScreen("units");
+}
+
+// ══ ユニット開始 ══════════════════════════════════════════
+function startUnit(uid){
+  curSubj.units.forEach(u=>{if(u.id===uid)curUnit=u;});
+  const type=curUnit.type;
+  if(type==="quiz") startQuiz(uid);
+  else if(type==="kaki") startKaki(uid);
+  else if(type==="essay") startEssay(uid);
+}
+
+// ══ クイズ ════════════════════════════════════════════════
+function startQuiz(uid, mogiMode=false){
+  const qs=Q[uid]||[];
+  // 苦手ブースト
+  const boosted=[];
+  qs.forEach((q,i)=>{boosted.push({...q,origIdx:i,uid});if((weakMap[uid+"_"+i]||0)>=2)boosted.push({...q,origIdx:i,uid});});
+  quizDeck=boosted.sort(()=>Math.random()-.5).slice(0,Math.min(curUnit?curUnit.count:10,boosted.length));
+  quizIdx=0;quizResults=[];
+  loadQuizQ();
+  showScreen("quiz");
+}
+
+function loadQuizQ(){
+  const q=quizDeck[quizIdx];
+  document.getElementById("qprog-fill").style.width=((quizIdx/quizDeck.length)*100)+"%";
+  document.getElementById("qprog-count").textContent=(quizIdx+1)+"/"+quizDeck.length;
+  document.getElementById("q-subject-tag").textContent=curSubj?curSubj.emoji+" "+curSubj.name:"模試";
+  const gc=gradeColor(q.g);
+  const gt=document.getElementById("q-grade-tag");
+  gt.textContent=q.g;gt.style.color=gc;gt.style.background=gc+"22";
+  document.getElementById("q-text").textContent=q.q;
+  document.getElementById("q-sub").textContent=q.ex||"";
+  // 選択肢
+  const div=document.getElementById("choices");
+  div.innerHTML=q.ch.map((c,i)=>`<button class="choice-btn" id="ch-${i}" onclick="answerQuiz(${i})">${c}</button>`).join("");
+  document.getElementById("feedback-box").style.display="none";
+  document.getElementById("hint-area-quiz").innerHTML="";
+  document.getElementById("quiz-next-btn").style.display="none";
+  startCountdown();
+  startCountdown();
+}
+
+function answerQuiz(chosen){
+  clearCountdown();
+  const q=quizDeck[quizIdx];
+  const correct=chosen===q.a;
+  // ボタン色
+  q.ch.forEach((_,i)=>{
+    const btn=document.getElementById("ch-"+i);
+    btn.disabled=true;
+    if(i===q.a)btn.classList.add(correct&&i===chosen?"correct":"show-correct");
+    else if(i===chosen&&!correct)btn.classList.add("wrong");
+  });
+  // フィードバック
+  const fb=document.getElementById("feedback-box");
+  fb.style.display="block";
+  fb.className="feedback-box "+(correct?"feedback-correct":"feedback-wrong");
+  fb.innerHTML=correct?"🎉 正解！"+(q.ex?"<br><span style='font-size:12px;opacity:.8'>"+q.ex+"</span>":"")
+    :"❌ 正解：「"+q.ch[q.a]+"」"+(q.ex?"<br><span style='font-size:12px;opacity:.8'>"+q.ex+"</span>":"");
+  // 苦手更新
+  const wk=curUnit?curUnit.id+"_"+q.origIdx:"mogi_"+quizIdx;
+  if(correct){if(weakMap[wk])weakMap[wk]=Math.max(0,weakMap[wk]-1);totalOk++;ls.set("nm_totalOk",totalOk);}
+  else weakMap[wk]=(weakMap[wk]||0)+1;
+  ls.set("nm_weak",weakMap);
+  quizResults.push({q,ok:correct});
+  document.getElementById("quiz-next-btn").style.display="block";
+}
+
+function nextQuizQ(){
+  clearCountdown();
+  if(quizIdx+1>=quizDeck.length){showQuizResult();return;}
+  quizIdx++;loadQuizQ();
+}
+
+function showQuizResult(){
+  const ok=quizResults.filter(r=>r.ok).length;
+  const total=quizResults.length;
+  const pct=Math.round(ok/total*100);
+  showResult(ok,total,pct,quizResults.filter(r=>!r.ok).map(r=>({q:r.q.q,a:r.q.ch[r.q.a]})));
+  if(curUnit&&pct>=70&&!clearedUnits.has(curUnit.id)){
+    clearedUnits.add(curUnit.id);ls.set("nm_cleared",[...clearedUnits]);
+    setTimeout(()=>showModal(pct,curUnit.name),600);
+  }
+}
+
+// ══ 書き取り ══════════════════════════════════════════════
+function startKaki(uid){
+  const ks=Q[uid]||[];
+  kakiDeck=[...ks].sort(()=>Math.random()-.5).slice(0,curUnit.count);
+  kakiIdx=0;kakiResults=[];kakiJudged=false;
+  loadKakiQ();showScreen("kaki");
+}
+
+function loadKakiQ(){
+  const k=kakiDeck[kakiIdx];
+  document.getElementById("kprog-fill").style.width=((kakiIdx/kakiDeck.length)*100)+"%";
+  document.getElementById("kprog-count").textContent=(kakiIdx+1)+"/"+kakiDeck.length;
+  const gc=gradeColor(k.g);
+  const gt=document.getElementById("k-grade-tag");gt.textContent=k.g;gt.style.color=gc;gt.style.background=gc+"22";
+  document.getElementById("k-kanji").textContent=k.k;
+  document.getElementById("k-reading").textContent=k.r;
+  document.getElementById("k-meaning").textContent="意味："+k.m;
+  document.getElementById("k-example").textContent="例："+k.ex;
+  kakiSampleVis=true;
+  document.getElementById("k-kanji").style.opacity="1";
+  document.getElementById("k-reading").style.opacity="1";
+  document.getElementById("toggle-k-btn").textContent="👁 お手本を隠す";
+  kakiJudged=false;
+  document.getElementById("j-ok").classList.remove("sel");document.getElementById("j-ng").classList.remove("sel");
+  document.getElementById("kaki-next-btn").style.display="none";
+  document.getElementById("k-hint-card").style.display="none";
+  document.getElementById("k-hint-btn").style.display="block";
+  document.getElementById("k-hint-btn").textContent="💡 AIに覚え方を教えてもらう";
+  document.getElementById("k-hint-btn").disabled=false;
+  traceOn=false;document.getElementById("trace-btn").classList.remove("on");
+  initCanvas();
+}
+
+function toggleKSample(){
+  kakiSampleVis=!kakiSampleVis;
+  document.getElementById("k-kanji").style.opacity=kakiSampleVis?"1":"0";
+  document.getElementById("k-reading").style.opacity=kakiSampleVis?"1":"0";
+  document.getElementById("toggle-k-btn").textContent=kakiSampleVis?"👁 お手本を隠す":"👁 お手本を見る";
+}
+
+function judgeKaki(ok){
+  if(kakiJudged)return;kakiJudged=true;
+  document.getElementById("j-ok").classList.toggle("sel",ok);document.getElementById("j-ng").classList.toggle("sel",!ok);
+  document.getElementById("kaki-next-btn").style.display="block";
+  document.getElementById("kaki-next-btn").textContent=kakiIdx+1>=kakiDeck.length?"結果を見る 📊":"次へ →";
+  const wk=curUnit.id+"_"+kakiIdx;
+  if(ok){if(weakMap[wk])weakMap[wk]=Math.max(0,weakMap[wk]-1);totalOk++;ls.set("nm_totalOk",totalOk);}
+  else weakMap[wk]=(weakMap[wk]||0)+1;
+  ls.set("nm_weak",weakMap);
+  kakiResults.push({k:kakiDeck[kakiIdx],ok});
+}
+
+function nextKakiQ(){
+  if(!kakiJudged)return;
+  if(kakiIdx+1>=kakiDeck.length){
+    const ok=kakiResults.filter(r=>r.ok).length,total=kakiResults.length,pct=Math.round(ok/total*100);
+    showResult(ok,total,pct,kakiResults.filter(r=>!r.ok).map(r=>({q:r.k.k,a:r.k.r})));
+    if(pct>=70&&!clearedUnits.has(curUnit.id)){
+      clearedUnits.add(curUnit.id);ls.set("nm_cleared",[...clearedUnits]);
+      setTimeout(()=>showModal(pct,curUnit.name),600);
+    }
+    return;
+  }
+  kakiIdx++;loadKakiQ();
+}
+
+async function loadKanjiHint(){
+  const k=kakiDeck[kakiIdx],btn=document.getElementById("k-hint-btn");
+  btn.textContent="⏳ AIが考えています…";btn.disabled=true;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-20250514",max_tokens:1000,
+      system:`受験生向け漢字記憶の専門家。JSON形式のみで返答:{"tip":"覚え方（30字以内）","story":"イメージ（15字以内）","similar":"混同注意（なければ空）"}`,
+      messages:[{role:"user",content:`漢字:「${k.k}」読み:${k.r} 意味:${k.m}`}]
+    })});
+    const data=await res.json();const text=data.content?.find(b=>b.type==="text")?.text||"{}";
+    const h=JSON.parse(text.replace(/```json|```/g,"").trim());
+    document.getElementById("k-hint-tip").textContent="💡 "+(h.tip||"");
+    document.getElementById("k-hint-story").textContent=h.story?"🖼 "+h.story:"";
+    document.getElementById("k-hint-similar").textContent=h.similar?"⚠️ 混同注意:「"+h.similar+"」":"";
+    document.getElementById("k-hint-card").style.display="block";btn.style.display="none";
+  }catch{btn.textContent="取得失敗";btn.disabled=false;}
+}
+
+// ══ 作文 ══════════════════════════════════════════════════
+function startEssay(uid){
+  const themes=Q[uid]||[];
+  essayDeck=[...themes].sort(()=>Math.random()-.5);
+  essayIdx=0;
+  loadEssay();showScreen("essay");
+}
+
+function loadEssay(){
+  const t=essayDeck[essayIdx];
+  document.getElementById("essay-prompt-text").textContent=t.theme;
+  document.getElementById("essay-conditions").innerHTML=t.conditions.map(c=>`<div class="essay-condition">✅ ${c}</div>`).join("");
+  document.getElementById("essayInput").value="";
+  document.getElementById("char-count").textContent="0字";
+  document.getElementById("essay-feedback").style.display="none";
+  document.getElementById("essay-next-btn").style.display="none";
+}
+
+function updateCharCount(){
+  const len=document.getElementById("essayInput").value.length;
+  const t=essayDeck[essayIdx];
+  const ok=len>=t.minChar&&len<=t.maxChar;
+  document.getElementById("char-count").textContent=len+"字 "+(ok?"✅":"⚠️ "+t.minChar+"〜"+t.maxChar+"字");
+  document.getElementById("char-count").style.color=ok?"#34D399":"#F59E0B";
+}
+
+async function submitEssay(){
+  const text=document.getElementById("essayInput").value;
+  const t=essayDeck[essayIdx];
+  if(text.trim().length<20){alert("もう少し書いてみましょう！");return;}
+  const btn=document.querySelector("#screen-essay .btn-primary");
+  btn.textContent="⏳ AIが添削中…";btn.disabled=true;
+  const fb=document.getElementById("essay-feedback");
+  const fbContent=document.getElementById("essay-fb-content");
+  fb.style.display="none";
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-20250514",max_tokens:1000,
+      system:`あなたは高校受験の国語作文の先生です。以下の観点で中学生に向けて優しく添削してください。
+①字数・条件を満たしているか ②主張が明確か ③理由・具体例があるか ④文章のまとまり ⑤改善ポイント1つ
+300字以内で、励ますトーンで。`,
+      messages:[{role:"user",content:`テーマ:${t.theme}\n条件:${t.conditions.join("、")}\n\n作文:\n${text}`}]
+    })});
+    const data=await res.json();
+    const aiText=data.content?.find(b=>b.type==="text")?.text||"添削できませんでした。";
+    fbContent.textContent=aiText;
+    fb.style.display="block";
+    document.getElementById("essay-next-btn").style.display="block";
+    if(!clearedUnits.has(curUnit.id)){
+      clearedUnits.add(curUnit.id);ls.set("nm_cleared",[...clearedUnits]);
+    }
+  }catch{fbContent.textContent="添削に失敗しました。もう一度試してください。";fb.style.display="block";}
+  btn.textContent="AIに添削してもらう ✨";btn.disabled=false;
+}
+
+function nextEssay(){
+  if(essayIdx+1>=essayDeck.length){goHome();return;}
+  essayIdx++;loadEssay();
+}
+
+// ══ 模試モード ════════════════════════════════════════════
+function startMogi(){
+  // 全分野からランダムに10問選ぶ
+  const quizUnits=["k1","k2","k5","k6","g1","g2","g3","o1","o2","o3","d1","d2","d3"];
+  const pool=[];
+  quizUnits.forEach(uid=>{(Q[uid]||[]).forEach((q,i)=>pool.push({...q,origIdx:i,uid}));});
+  quizDeck=pool.sort(()=>Math.random()-.5).slice(0,10);
+  quizIdx=0;quizResults=[];
+  curUnit=null;
+  curSubj={emoji:"📝",name:"模試モード",id:"mogi"};
+  loadQuizQ();showScreen("quiz");
+}
+
+function startWeak(){
+  const pool=[];
+  Object.keys(weakMap).filter(k=>weakMap[k]>0).forEach(wk=>{
+    const [uid,i]=wk.split("_");
+    const qs=Q[uid];if(!qs||!qs[i])return;
+    pool.push({...qs[i],origIdx:parseInt(i),uid});
+  });
+  if(pool.length===0){alert("苦手問題がありません！");return;}
+  quizDeck=pool.sort(()=>Math.random()-.5).slice(0,10);
+  quizIdx=0;quizResults=[];
+  curUnit=null;curSubj={emoji:"🎯",name:"苦手特訓",id:"weak"};
+  loadQuizQ();showScreen("quiz");
+}
+
+// ══ 結果 ══════════════════════════════════════════════════
+function showResult(ok,total,pct,wrongList){
+  document.getElementById("res-emoji").textContent=pct===100?"🏆":pct>=70?"🎉":pct>=50?"💪":"🔄";
+  document.getElementById("res-title").textContent=pct===100?"パーフェクト！":pct>=70?"よくできました！":pct>=50?"もう少し！":"復習しよう";
+  document.getElementById("res-subject-name").textContent=curSubj?curSubj.name:"";
+  document.getElementById("rv-ok").textContent=ok;
+  document.getElementById("rv-ng").textContent=total-ok;
+  document.getElementById("rv-pct").textContent=pct+"%";
+  const wb=document.getElementById("wrong-block");
+  if(wrongList&&wrongList.length>0){
+    wb.style.display="block";
+    document.getElementById("wrong-items").innerHTML=wrongList.map(w=>`
+      <div class="wrong-row">
+        <div style="font-weight:700;color:#F8FAFC;font-size:15px;margin-bottom:3px;">Q: ${w.q}</div>
+        <div style="color:#34D399;font-size:13px;">A: ${w.a}</div>
+      </div>`).join("");
+  }else wb.style.display="none";
+  showScreen("result");
+}
+
+function retrySession(){
+  if(curUnit) startUnit(curUnit.id);
+  else startMogi();
+}
+
+// ══ Canvas ════════════════════════════════════════════════
+const canvas=document.getElementById("drawCanvas");
+const ctx=canvas.getContext("2d");
+function initCanvas(){
+  const s=Math.min(window.innerWidth-48,320);canvas.width=s;canvas.height=s;redrawBase();
+}
+function redrawBase(){
+  const s=canvas.width;
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,s,s);
+  ctx.strokeStyle="#E2E8F0";ctx.lineWidth=1;ctx.strokeRect(1,1,s-2,s-2);
+  ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(s/2,0);ctx.lineTo(s/2,s);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,s/2);ctx.lineTo(s,s/2);ctx.stroke();
+  ctx.strokeStyle="#F8FAFC";
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(s,s);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s,0);ctx.lineTo(0,s);ctx.stroke();
+  ctx.setLineDash([]);
+  if(traceOn&&kakiDeck[kakiIdx]){
+    ctx.font=`900 ${s*.72}px -apple-system,sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillStyle="rgba(79,70,229,.12)";ctx.fillText(kakiDeck[kakiIdx].k,s/2,s/2);
+  }
+}
+function clearCanvas(){redrawBase();}
+function toggleTrace(){traceOn=!traceOn;document.getElementById("trace-btn").classList.toggle("on",traceOn);redrawBase();}
+function togglePen(){penBig=!penBig;}
+function getPos(e){const r=canvas.getBoundingClientRect(),src=e.touches?e.touches[0]:e;return{x:src.clientX-r.left,y:src.clientY-r.top};}
+canvas.addEventListener("touchstart",e=>{
+  e.preventDefault();e.stopPropagation();
+  drawing=true;
+  document.body.style.overflow="hidden";
+  document.body.style.position="fixed";
+  document.body.style.width="100%";
+  const p=getPos(e);lx=p.x;ly=p.y;
+},{passive:false});
+canvas.addEventListener("touchmove",e=>{
+  if(!drawing)return;
+  e.preventDefault();e.stopPropagation();
+  const p=getPos(e);drawLine(lx,ly,p.x,p.y);lx=p.x;ly=p.y;
+},{passive:false});
+canvas.addEventListener("touchend",e=>{
+  drawing=false;
+  document.body.style.overflow="";
+  document.body.style.position="";
+  document.body.style.width="";
+});
+canvas.addEventListener("touchcancel",e=>{
+  drawing=false;
+  document.body.style.overflow="";
+  document.body.style.position="";
+  document.body.style.width="";
+});
+canvas.addEventListener("mousedown",e=>{drawing=true;const p=getPos(e);lx=p.x;ly=p.y;});
+canvas.addEventListener("mousemove",e=>{if(!drawing)return;const p=getPos(e);drawLine(lx,ly,p.x,p.y);lx=p.x;ly=p.y;});
+canvas.addEventListener("mouseup",()=>drawing=false);
+function drawLine(x1,y1,x2,y2){ctx.strokeStyle="#1E293B";ctx.lineWidth=penBig?8:4;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+
+// ══ 統計 ══════════════════════════════════════════════════
+function renderStats(){
+  const allUnits=SUBJECTS.flatMap(s=>s.units);
+  const doneUnits=allUnits.filter(u=>clearedUnits.has(u.id)).length;
+  document.getElementById("stats-content").innerHTML=`
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      ${[["✅ ユニット完了",doneUnits+"/"+allUnits.length,"#818CF8"],["🔥 連続日数",streak+"日","#F59E0B"],["⭕ 累計正解",totalOk+"問","#34D399"]].map(([l,v,c])=>`
+        <div style="flex:1;min-width:120px;background:#1E293B;border-radius:14px;padding:14px 16px">
+          <div style="color:${c};font-size:20px;font-weight:900">${v}</div>
+          <div style="color:#475569;font-size:12px;margin-top:3px">${l}</div>
+        </div>`).join("")}
+    </div>
+    ${SUBJECTS.map(s=>{
+      const done=s.units.filter(u=>clearedUnits.has(u.id)).length;
+      const p=Math.round(done/s.units.length*100);
+      return `<div style="background:#1E293B;border-radius:14px;padding:14px 18px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="font-weight:700;color:#F8FAFC">${s.emoji} ${s.name}</span>
+          <span style="color:${s.color};font-weight:700">${p}%</span>
+        </div>
+        <div style="height:5px;background:#334155;border-radius:99px"><div style="height:100%;width:${p}%;background:${s.color};border-radius:99px"></div></div>
+        <div style="font-size:12px;color:#475569;margin-top:5px">${done}/${s.units.length}ユニット完了</div>
+      </div>`;
+    }).join("")}
+  `;
+}
+
+// ══ ユーティリティ ════════════════════════════════════════
+function gradeColor(g){return g==="必出"?"#DC2626":g==="頻出"?"#D97706":g==="基礎"?"#0EA5E9":"#7C3AED";}
+function showModal(pct,unitName){
+  document.getElementById("modal-emoji").textContent=pct===100?"🏆":"🎉";
+  document.getElementById("modal-title").textContent="ユニット完了！";
+  document.getElementById("modal-body").innerHTML=`「${unitName}」<br>正答率 <strong style="color:#818CF8">${pct}%</strong> でクリア！<br>次のユニットが解放されました。`;
+  document.getElementById("modal").style.display="flex";
+}
+function closeModal(){document.getElementById("modal").style.display="none";}
+function showScreen(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById("screen-"+name).classList.add("active");
+  window.scrollTo(0,0);
+}
+function goHome(){showScreen("home");updateHome();}
+
+// ── 初期化 ──
+updateHome();
+initCanvas();
+window.addEventListener("resize",()=>{
+  if(document.getElementById("screen-kaki").classList.contains("active"))initCanvas();
+});
+
+// ── グローバル登録（Android/Chrome対応） ──
+window.showScreen=showScreen;
+window.goHome=goHome;
+window.updateHome=updateHome;
+window.renderStats=renderStats;
+window.openSubject=openSubject;
+window.startUnit=startUnit;
+window.startMogi=startMogi;
+window.startWeak=startWeak;
+window.retrySession=retrySession;
+window.answerQuiz=answerQuiz;
+window.nextQuizQ=nextQuizQ;
+window.toggleKSample=toggleKSample;
+window.judgeKaki=judgeKaki;
+window.nextKakiQ=nextKakiQ;
+window.clearCanvas=clearCanvas;
+window.toggleTrace=toggleTrace;
+window.togglePen=togglePen;
+window.loadKanjiHint=loadKanjiHint;
+window.updateCharCount=updateCharCount;
+window.submitEssay=submitEssay;
+window.nextEssay=nextEssay;
+window.closeModal=closeModal;
+
+</script>
+</body>
+</html>
