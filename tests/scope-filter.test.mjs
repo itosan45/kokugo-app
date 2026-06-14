@@ -48,3 +48,7 @@ test("all inline scripts have valid JavaScript syntax",()=>{
   assert.doesNotThrow(()=>new Function(source));
  }
 });
+
+test("marking a topic unlearned does not ask for confirmation",()=>{
+ assert.doesNotMatch(html,/\bconfirm\s*\(/);
+});

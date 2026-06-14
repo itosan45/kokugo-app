@@ -744,7 +744,6 @@ function saveScope(){
 function markCurrentTopicUnlearned(format){
   const current=format==="quiz"?quizDeck[quizIdx]:format==="kaki"?kakiDeck[kakiIdx]:format==="essay"?essayDeck[essayIdx]:suikoDeck[suikoIdx];
   if(!current)return;
-  if(!confirm(`「${current.topicName}」を、まだ習っていない範囲にしますか？`))return;
   const result=skipUnlearnedTopic({learnedTopics:[...learnedTopics]},current.topicId,
     format==="quiz"?quizDeck.slice(quizIdx+1):format==="kaki"?kakiDeck.slice(kakiIdx+1):format==="essay"?essayDeck.slice(essayIdx+1):suikoDeck.slice(suikoIdx+1));
   learnedTopics=new Set(result.learnedTopics);
