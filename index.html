@@ -45,7 +45,11 @@ body{background:#0F172A;color:#F8FAFC;font-family:-apple-system,'Helvetica Neue'
 .unit-card{background:#1E293B;border-radius:14px;padding:14px 16px;margin-bottom:9px;cursor:pointer;display:flex;align-items:center;gap:12px;border:1.5px solid transparent;}
 .unit-card.locked{opacity:.4;cursor:default;}
 .unit-card.cleared{border-color:#10B98133;}
+.unit-card.unlearned{opacity:.55;border-color:#64748B44;}
 .unit-num{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+.scope-row{display:flex;align-items:center;gap:12px;background:#1E293B;border-radius:14px;padding:14px 16px;margin-bottom:9px;}
+.scope-toggle{border:1px solid #475569;border-radius:99px;padding:8px 12px;background:#334155;color:#CBD5E1;font-weight:800;cursor:pointer;}
+.scope-toggle.learned{background:#065F46;border-color:#10B981;color:#A7F3D0;}
 
 /* ── クイズ（選択肢） ── */
 .quiz-card{background:#1E293B;border-radius:22px;padding:24px 22px;margin-bottom:14px;}
@@ -159,6 +163,7 @@ textarea#essayInput:focus{border-color:#4F46E5;}
   </div>
 
   <div class="sec-label">▸ 特訓・テスト</div>
+  <button class="btn-ghost" onclick="showScope()">📚 学習範囲を変更</button>
   <button class="btn-ghost" id="weak-btn-home" onclick="startWeak()" style="display:none">🎯 苦手だけ集中特訓</button>
   <button class="btn-ghost" onclick="startMogi()">📝 模試モード（全分野混合10問）</button>
   <button class="btn-ghost" onclick="showScreen('stats');renderStats()">📊 学習記録を見る</button>
@@ -190,6 +195,7 @@ textarea#essayInput:focus{border-color:#4F46E5;}
     <div style="display:flex;gap:8px;margin-bottom:14px;">
       <span class="tag" id="q-subject-tag" style="background:#4F46E522;color:#818CF8">文法</span>
       <span class="tag" id="q-grade-tag" style="background:#DC262622;color:#DC2626">必出</span>
+      <span class="tag" id="q-topic-tag" style="background:#0EA5E922;color:#7DD3FC"></span>
     </div>
     <div class="question-text" id="q-text">問題文</div>
     <div class="question-sub" id="q-sub"></div>
@@ -205,6 +211,7 @@ textarea#essayInput:focus{border-color:#4F46E5;}
   </div>
   <div id="feedback-box" style="display:none" class="feedback-box"></div>
   <div id="hint-area-quiz"></div>
+  <button class="btn-ghost" id="quiz-unlearned-btn" onclick="markCurrentTopicUnlearned('quiz')">まだ習っていない</button>
   <button class="btn-primary" id="quiz-next-btn" onclick="nextQuizQ()" style="display:none">次へ →</button>
 </div>
 
@@ -259,6 +266,7 @@ textarea#essayInput:focus{border-color:#4F46E5;}
       <button class="j-btn j-ng" id="j-ng" onclick="judgeKaki(false)">❌ 書けなかった</button>
     </div>
   </div>
+  <button class="btn-ghost" id="kaki-unlearned-btn" onclick="markCurrentTopicUnlearned('kaki')">まだ習っていない</button>
   <button class="btn-primary" id="kaki-next-btn" onclick="nextKakiQ()" style="display:none">次へ →</button>
 </div>
 
@@ -282,6 +290,7 @@ textarea#essayInput:focus{border-color:#4F46E5;}
     <div style="color:#818CF8;font-size:11px;font-weight:700;margin-bottom:8px;">✨ AI添削コーチ</div>
     <div id="essay-fb-content" style="color:#C7D2FE;font-size:14px;line-height:1.7;"></div>
   </div>
+  <button class="btn-ghost" id="essay-unlearned-btn" onclick="markCurrentTopicUnlearned('essay')">まだ習っていない</button>
   <button class="btn-ghost" id="essay-next-btn" onclick="nextEssay()" style="display:none">次のテーマへ →</button>
   <button class="btn-ghost" onclick="showScreen('units')">ユニットへ戻る</button>
 </div>
@@ -356,6 +365,7 @@ textarea#essayInput:focus{border-color:#4F46E5;}
     <div class="choices" id="suiko-choices"></div>
   </div>
   <div id="suiko-feedback" style="display:none" class="feedback-box"></div>
+  <button class="btn-ghost" id="suiko-unlearned-btn" onclick="markCurrentTopicUnlearned('suiko')">まだ習っていない</button>
   <button class="btn-primary" id="suiko-next-btn" onclick="nextSuikoQ()" style="display:none">次へ →</button>
 </div>
 
@@ -365,6 +375,22 @@ textarea#essayInput:focus{border-color:#4F46E5;}
     <div style="font-size:18px;font-weight:800;">📊 学習記録</div>
   </div>
   <div id="stats-content"></div>
+</div>
+
+<div id="screen-scope" class="screen">
+  <div class="row-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div>
+      <div style="font-size:18px;font-weight:800;">📚 学習範囲</div>
+      <div style="font-size:12px;color:#64748B;">中3で習い終わった単元を選択</div>
+    </div>
+  </div>
+  <div class="card" style="font-size:13px;color:#94A3B8;line-height:1.7;">
+    中1・中2の反復技能は学習済みです。中3の単元だけ「習った」にしてください。
+    <div id="scope-count" style="color:#7DD3FC;font-weight:800;margin-top:7px;"></div>
+  </div>
+  <div id="scope-list"></div>
+  <button class="btn-primary" onclick="saveScope()">この範囲で学習する</button>
 </div>
 
 <!-- モーダル -->
@@ -378,6 +404,12 @@ textarea#essayInput:focus{border-color:#4F46E5;}
 </div>
 
 </div><!-- #app -->
+<script id="scope-engine">
+function defaultLearnedTopicIds(topics){return topics.filter(topic=>topic.grade<3).map(topic=>topic.id)}
+function isQuestionAvailable(question,learnedTopics){const learned=new Set(learnedTopics);return learned.has(question.topicId)&&(question.prerequisites||[]).every(id=>learned.has(id))}
+function filterAvailableQuestions(questions,learnedTopics){return questions.filter(question=>isQuestionAvailable(question,learnedTopics))}
+function skipUnlearnedTopic(state,topicId,remainingDeck){return{learnedTopics:state.learnedTopics.filter(id=>id!==topicId),deck:remainingDeck.filter(question=>question.topicId!==topicId)}}
+</script>
 <script>
 // ══════════════════════════════════════════════════════════
 // データ定義
@@ -425,6 +457,33 @@ const SUBJECTS = [
     ]
   },
 ];
+
+const TOPICS=[
+ {id:"k1",name:"漢字の読み・基礎",grade:1,prerequisites:[]},
+ {id:"k2",name:"漢字の読み・応用",grade:2,prerequisites:["k1"]},
+ {id:"k3",name:"漢字の書き取り・基礎",grade:2,prerequisites:["k1"]},
+ {id:"k4",name:"漢字の書き取り・発展",grade:3,prerequisites:["k3"]},
+ {id:"k5",name:"四字熟語",grade:2,prerequisites:[]},
+ {id:"k6",name:"類義語・対義語",grade:2,prerequisites:[]},
+ {id:"g1",name:"品詞",grade:1,prerequisites:[]},
+ {id:"g2",name:"文節の関係",grade:2,prerequisites:["g1"]},
+ {id:"g3",name:"敬語",grade:2,prerequisites:[]},
+ {id:"g4",name:"助詞・助動詞",grade:3,prerequisites:["g1"]},
+ {id:"o1",name:"歴史的仮名遣い",grade:1,prerequisites:[]},
+ {id:"o2",name:"古語単語・基礎",grade:2,prerequisites:["o1"]},
+ {id:"o3",name:"古語単語・発展",grade:2,prerequisites:["o2"]},
+ {id:"o4",name:"古文読解",grade:3,prerequisites:["o1","o2"]},
+ {id:"e1",name:"体験作文",grade:2,prerequisites:[]},
+ {id:"e2",name:"意見作文",grade:2,prerequisites:["e1"]},
+ {id:"e3",name:"資料・グラフ作文",grade:3,prerequisites:["e2"]},
+ {id:"d1",name:"論説文・指示語",grade:1,prerequisites:[]},
+ {id:"d2",name:"論説文・要旨",grade:2,prerequisites:["d1"]},
+ {id:"d3",name:"小説・心情",grade:2,prerequisites:[]},
+ {id:"d4",name:"小説・表現技法",grade:3,prerequisites:["d3"]},
+ {id:"suiko",name:"発表原稿の推敲",grade:3,prerequisites:["g3"]}
+];
+const topicOf=id=>TOPICS.find(topic=>topic.id===id);
+function withTopic(item,uid,index=0){const topic=topicOf(uid)||{id:uid,name:"国語総合",grade:2,prerequisites:[]};return{...item,origIdx:item.origIdx??index,uid,topicId:topic.id,topicName:topic.name,grade:topic.grade,prerequisites:topic.prerequisites}}
 
 // ── 問題データ ──────────────────────────────────────────
 const Q = {
@@ -628,6 +687,10 @@ let weakMap=ls.get("nm_weak",{});        // "subj_idx" -> count
 let clearedUnits=new Set(ls.get("nm_cleared",[]));
 let streak=ls.get("nm_streak",0);
 let totalOk=ls.get("nm_totalOk",0);
+let scopeConfigured=ls.get("nm_scope_configured",false);
+let learnedTopics=new Set(ls.get("nm_learned_topics",defaultLearnedTopicIds(TOPICS)));
+let pendingLearnedTopics=new Set(learnedTopics);
+let newlyLearnedTopics=ls.get("nm_newly_learned_topics",{});
 
 (()=>{
   const today=new Date().toDateString(),last=ls.get("nm_lastDate",""),yest=new Date(Date.now()-86400000).toDateString();
@@ -641,6 +704,60 @@ let curSubj=null,curUnit=null,quizDeck=[],quizIdx=0,quizResults=[];
 let kakiDeck=[],kakiIdx=0,kakiResults=[],kakiJudged=false;
 let kakiSampleVis=true,traceOn=false,penBig=true,drawing=false,lx=0,ly=0;
 let essayDeck=[],essayIdx=0,curSessionMode="normal";
+
+function available(items){return filterAvailableQuestions(items,[...learnedTopics])}
+function ensureScopeConfigured(){if(scopeConfigured)return true;showScope();return false}
+function showNoAvailable(){alert("この学習範囲で解ける問題がありません。学習範囲を確認してください。");showScope()}
+function showScope(){
+  pendingLearnedTopics=new Set(learnedTopics);
+  renderScope();
+  showScreen("scope");
+}
+function renderScope(){
+  const third=TOPICS.filter(topic=>topic.grade===3);
+  document.getElementById("scope-list").innerHTML=third.map(topic=>{
+    const learned=pendingLearnedTopics.has(topic.id);
+    return `<div class="scope-row"><div style="flex:1"><b>${topic.name}</b><div style="font-size:11px;color:#64748B;margin-top:3px">中学3年${topic.prerequisites.length?`・前提 ${topic.prerequisites.map(id=>topicOf(id)?.name).filter(Boolean).join("、")}`:""}</div></div><button class="scope-toggle ${learned?"learned":""}" onclick="toggleTopic('${topic.id}')">${learned?"習った":"まだ"}</button></div>`;
+  }).join("");
+  const possible=Object.entries(Q).reduce((sum,[uid,items])=>sum+filterAvailableQuestions(items.map((item,i)=>withTopic(item,uid,i)),[...pendingLearnedTopics]).length,0);
+  document.getElementById("scope-count").textContent=`現在の範囲で ${possible} 問が学習可能`;
+}
+function toggleTopic(id){
+  if(pendingLearnedTopics.has(id))pendingLearnedTopics.delete(id);
+  else{
+    pendingLearnedTopics.add(id);
+    (topicOf(id)?.prerequisites||[]).forEach(prerequisite=>pendingLearnedTopics.add(prerequisite));
+  }
+  renderScope();
+}
+function saveScope(){
+  const before=new Set(learnedTopics);
+  learnedTopics=new Set(pendingLearnedTopics);
+  learnedTopics.forEach(id=>{if(!before.has(id))newlyLearnedTopics[id]=3});
+  scopeConfigured=true;
+  ls.set("nm_scope_configured",true);
+  ls.set("nm_scope_version",1);
+  ls.set("nm_learned_topics",[...learnedTopics]);
+  ls.set("nm_newly_learned_topics",newlyLearnedTopics);
+  goHome();
+}
+function markCurrentTopicUnlearned(format){
+  const current=format==="quiz"?quizDeck[quizIdx]:format==="kaki"?kakiDeck[kakiIdx]:format==="essay"?essayDeck[essayIdx]:suikoDeck[suikoIdx];
+  if(!current)return;
+  if(!confirm(`「${current.topicName}」を、まだ習っていない範囲にしますか？`))return;
+  const result=skipUnlearnedTopic({learnedTopics:[...learnedTopics]},current.topicId,
+    format==="quiz"?quizDeck.slice(quizIdx+1):format==="kaki"?kakiDeck.slice(kakiIdx+1):format==="essay"?essayDeck.slice(essayIdx+1):suikoDeck.slice(suikoIdx+1));
+  learnedTopics=new Set(result.learnedTopics);
+  delete newlyLearnedTopics[current.topicId];
+  ls.set("nm_learned_topics",[...learnedTopics]);
+  ls.set("nm_newly_learned_topics",newlyLearnedTopics);
+  clearCountdown();
+  if(!result.deck.length){showNoAvailable();return}
+  if(format==="quiz"){quizDeck=result.deck;quizIdx=0;loadQuizQ()}
+  else if(format==="kaki"){kakiDeck=result.deck;kakiIdx=0;kakiJudged=false;loadKakiQ()}
+  else if(format==="essay"){essayDeck=result.deck;essayIdx=0;loadEssay()}
+  else{suikoDeck=result.deck;suikoIdx=0;loadSuikoQ()}
+}
 
 
 // ══ カウントダウン（30秒でヒント自動表示） ══════════════
@@ -828,12 +945,14 @@ function renderShizuoka(){
 }
 
 function startShizuokaUnit(uid){
+  if(!ensureScopeConfigured())return;
   const unit = SHIZUOKA_UNITS.find(u=>u.id===uid);
   if(!unit) return;
 
   if(uid === "sz3"){
     // 推敲専用画面
-    suikoDeck = [...SUIKO_Q].sort(()=>Math.random()-.5).slice(0,6);
+    suikoDeck = available(SUIKO_Q.map((q,i)=>withTopic(q,"suiko",i))).sort(()=>Math.random()-.5).slice(0,6);
+    if(!suikoDeck.length){showNoAvailable();return}
     suikoIdx=0; suikoResults=[];
     loadSuikoQ();
     showScreen("suiko");
@@ -842,14 +961,15 @@ function startShizuokaUnit(uid){
     curSubj = { emoji: unit.icon, name: unit.name, id: uid };
     // 複数qkeysをマージ
     let pool = [];
-    unit.qkeys.forEach(k=>{ (Q[k]||[]).forEach((q,i)=>pool.push({...q,origIdx:i,uid:k})); });
-    quizDeck = pool.sort(()=>Math.random()-.5).slice(0,8);
+    unit.qkeys.forEach(k=>{ (Q[k]||[]).forEach((q,i)=>pool.push(withTopic(q,k,i))); });
+    quizDeck = available(pool).sort(()=>Math.random()-.5).slice(0,8);
     quizIdx=0; quiRes=[];quizResults=[];
     // 作文の場合
     if(uid==="sz5"){
       curUnit={id:"e1",name:unit.name,count:3,type:"essay"};
       startEssay("e1"); return;
     }
+    if(!quizDeck.length){showNoAvailable();return}
     curUnit={id:uid,name:unit.name,count:quizDeck.length,type:"quiz"};
     loadQuizQ();
     showScreen("quiz");
@@ -857,19 +977,19 @@ function startShizuokaUnit(uid){
 }
 
 function startShizuokaMogi(){
+  if(!ensureScopeConfigured())return;
   // 全大問から2問ずつ・推敲2問・計10問
   const pool=[];
   ["d3","d1","g3","o1","o2"].forEach(k=>{
     const qs=Q[k]||[];
     const picked=qs.sort(()=>Math.random()-.5).slice(0,2);
-    picked.forEach((q,i)=>pool.push({...q,origIdx:i,uid:k}));
+    picked.forEach((q,i)=>pool.push(withTopic(q,k,i)));
   });
-  quizDeck = pool.sort(()=>Math.random()-.5).slice(0,8);
+  quizDeck = available(pool).sort(()=>Math.random()-.5).slice(0,8);
   // 推敲2問追加
-  const suiko2 = [...SUIKO_Q].sort(()=>Math.random()-.5).slice(0,2).map(q=>({
-    q:q.q, a:q.a, ch:q.ch, ex:q.ex, g:q.g, origIdx:0, uid:"suiko"
-  }));
+  const suiko2 = available(SUIKO_Q.map((q,i)=>withTopic(q,"suiko",i))).sort(()=>Math.random()-.5).slice(0,2);
   quizDeck = [...quizDeck, ...suiko2];
+  if(!quizDeck.length){showNoAvailable();return}
   quizIdx=0; quizResults=[];
   curSubj={emoji:"🗻",name:"静岡県模試",id:"sz_mogi"};
   curUnit={id:"sz_mogi",name:"静岡県模試",count:quizDeck.length,type:"quiz"};
@@ -938,26 +1058,27 @@ function updateHome(){
 
   // 全体進捗
   const allUnits=SUBJECTS.flatMap(s=>s.units);
-  const doneUnits=allUnits.filter(u=>clearedUnits.has(u.id)).length;
-  const pct=Math.round(doneUnits/allUnits.length*100);
+  const learnedUnits=allUnits.filter(u=>learnedTopics.has(u.id));
+  const doneUnits=learnedUnits.filter(u=>clearedUnits.has(u.id)).length;
+  const pct=learnedUnits.length?Math.round(doneUnits/learnedUnits.length*100):0;
   const ring=document.getElementById("overall-ring");
   const circ=2*Math.PI*28;
   ring.style.strokeDashoffset=circ*(1-pct/100);
   document.getElementById("overall-pct").textContent=pct+"%";
-  document.getElementById("overall-detail").textContent=doneUnits+"/"+allUnits.length+"ユニット完了";
+  document.getElementById("overall-detail").textContent=doneUnits+"/"+learnedUnits.length+" 学習範囲内ユニット完了";
 
   // タグ
   const tags=document.getElementById("home-tags");
   tags.innerHTML=SUBJECTS.map(s=>{
-    const done=s.units.filter(u=>clearedUnits.has(u.id)).length;
-    return `<span class="tag" style="background:${s.color}22;color:${s.color}">${s.emoji}${done}/${s.units.length}</span>`;
+    const units=s.units.filter(u=>learnedTopics.has(u.id)),done=units.filter(u=>clearedUnits.has(u.id)).length;
+    return `<span class="tag" style="background:${s.color}22;color:${s.color}">${s.emoji}${done}/${units.length}</span>`;
   }).join("");
 
   // 科目カード
   const sc=document.getElementById("subject-cards");
   sc.innerHTML=SUBJECTS.map(s=>{
-    const done=s.units.filter(u=>clearedUnits.has(u.id)).length;
-    const p=Math.round(done/s.units.length*100);
+    const units=s.units.filter(u=>learnedTopics.has(u.id)),done=units.filter(u=>clearedUnits.has(u.id)).length;
+    const p=units.length?Math.round(done/units.length*100):0;
     return `<div class="subject-card" onclick="openSubject('${s.id}')">
       <div style="display:flex;align-items:center;gap:12px;">
         <div class="subject-icon" style="background:${s.color}22">${s.emoji}</div>
@@ -983,13 +1104,14 @@ function openSubject(sid){
   const ul=document.getElementById("units-list");
   ul.innerHTML=curSubj.units.map((u,i)=>{
     const cleared=clearedUnits.has(u.id);
-    const locked=i>0&&!clearedUnits.has(curSubj.units[i-1].id)&&!cleared;
+    const learned=learnedTopics.has(u.id);
+    const locked=!learned;
     const numBg=cleared?"#10B98122":"#334155",numColor=cleared?"#34D399":"#64748B";
-    return `<div class="unit-card ${locked?"locked":""} ${cleared?"cleared":""}" onclick="${locked?"":"startUnit('"+u.id+"')"}">
+    return `<div class="unit-card ${locked?"unlearned":""} ${cleared?"cleared":""}" onclick="${locked?"showScope()":"startUnit('"+u.id+"')"}">
       <div class="unit-num" style="background:${numBg};color:${numColor}">${i+1}</div>
       <div style="flex:1"><div style="font-weight:700;font-size:15px;color:#F8FAFC">${u.name}</div>
         <div style="font-size:12px;color:#64748B;margin-top:2px">${u.grade} · ${u.count}問</div></div>
-      <div style="font-size:18px">${locked?"🔒":cleared?"✅":"▶️"}</div>
+      <div style="font-size:18px">${locked?"まだ":cleared?"✅":"▶️"}</div>
     </div>`;
   }).join("");
   showScreen("units");
@@ -997,7 +1119,9 @@ function openSubject(sid){
 
 // ══ ユニット開始 ══════════════════════════════════════════
 function startUnit(uid){
+  if(!ensureScopeConfigured())return;
   curSubj.units.forEach(u=>{if(u.id===uid)curUnit=u;});
+  if(!learnedTopics.has(uid)){showScope();return}
   const type=curUnit.type;
   if(type==="quiz") startQuiz(uid);
   else if(type==="kaki") startKaki(uid);
@@ -1006,11 +1130,12 @@ function startUnit(uid){
 
 // ══ クイズ ════════════════════════════════════════════════
 function startQuiz(uid, mogiMode=false){
-  const qs=Q[uid]||[];
+  const qs=available((Q[uid]||[]).map((q,i)=>withTopic(q,uid,i)));
   // 苦手ブースト
   const boosted=[];
-  qs.forEach((q,i)=>{boosted.push({...q,origIdx:i,uid});if((weakMap[uid+"_"+i]||0)>=2)boosted.push({...q,origIdx:i,uid});});
+  qs.forEach((q,i)=>{boosted.push(q);if((weakMap[uid+"_"+q.origIdx]||0)>=2)boosted.push({...q});});
   quizDeck=boosted.sort(()=>Math.random()-.5).slice(0,Math.min(curUnit?curUnit.count:10,boosted.length));
+  if(!quizDeck.length){showNoAvailable();return}
   quizIdx=0;quizResults=[];
   loadQuizQ();
   showScreen("quiz");
@@ -1024,6 +1149,7 @@ function loadQuizQ(){
   const gc=gradeColor(q.g);
   const gt=document.getElementById("q-grade-tag");
   gt.textContent=q.g;gt.style.color=gc;gt.style.background=gc+"22";
+  document.getElementById("q-topic-tag").textContent=`中${q.grade}・${q.topicName}`;
   document.getElementById("q-text").textContent=q.q;
   document.getElementById("q-sub").textContent=q.ex||"";
   // 選択肢
@@ -1081,8 +1207,9 @@ function showQuizResult(){
 
 // ══ 書き取り ══════════════════════════════════════════════
 function startKaki(uid){
-  const ks=Q[uid]||[];
+  const ks=available((Q[uid]||[]).map((q,i)=>withTopic(q,uid,i)));
   kakiDeck=[...ks].sort(()=>Math.random()-.5).slice(0,curUnit.count);
+  if(!kakiDeck.length){showNoAvailable();return}
   kakiIdx=0;kakiResults=[];kakiJudged=false;
   loadKakiQ();showScreen("kaki");
 }
@@ -1165,8 +1292,9 @@ async function loadKanjiHint(){
 
 // ══ 作文 ══════════════════════════════════════════════════
 function startEssay(uid){
-  const themes=Q[uid]||[];
+  const themes=available((Q[uid]||[]).map((q,i)=>withTopic(q,uid,i)));
   essayDeck=[...themes].sort(()=>Math.random()-.5);
+  if(!essayDeck.length){showNoAvailable();return}
   essayIdx=0;
   loadEssay();showScreen("essay");
 }
@@ -1225,11 +1353,13 @@ function nextEssay(){
 
 // ══ 模試モード ════════════════════════════════════════════
 function startMogi(){
+  if(!ensureScopeConfigured())return;
   // 全分野からランダムに10問選ぶ
   const quizUnits=["k1","k2","k5","k6","g1","g2","g3","o1","o2","o3","d1","d2","d3"];
   const pool=[];
-  quizUnits.forEach(uid=>{(Q[uid]||[]).forEach((q,i)=>pool.push({...q,origIdx:i,uid}));});
-  quizDeck=pool.sort(()=>Math.random()-.5).slice(0,10);
+  quizUnits.forEach(uid=>{(Q[uid]||[]).forEach((q,i)=>pool.push(withTopic(q,uid,i)));});
+  quizDeck=available(pool).sort(()=>Math.random()-.5).slice(0,10);
+  if(!quizDeck.length){showNoAvailable();return}
   quizIdx=0;quizResults=[];
   curUnit=null;
   curSubj={emoji:"📝",name:"模試モード",id:"mogi"};
@@ -1237,14 +1367,15 @@ function startMogi(){
 }
 
 function startWeak(){
+  if(!ensureScopeConfigured())return;
   const pool=[];
   Object.keys(weakMap).filter(k=>weakMap[k]>0).forEach(wk=>{
     const [uid,i]=wk.split("_");
     const qs=Q[uid];if(!qs||!qs[i])return;
-    pool.push({...qs[i],origIdx:parseInt(i),uid});
+    pool.push(withTopic(qs[i],uid,parseInt(i)));
   });
-  if(pool.length===0){alert("苦手問題がありません！");return;}
-  quizDeck=pool.sort(()=>Math.random()-.5).slice(0,10);
+  quizDeck=available(pool).sort(()=>Math.random()-.5).slice(0,10);
+  if(quizDeck.length===0){alert("現在の学習範囲に苦手問題がありません。");return;}
   quizIdx=0;quizResults=[];
   curUnit=null;curSubj={emoji:"🎯",name:"苦手特訓",id:"weak"};
   loadQuizQ();showScreen("quiz");
@@ -1404,6 +1535,10 @@ window.updateCharCount=updateCharCount;
 window.submitEssay=submitEssay;
 window.nextEssay=nextEssay;
 window.closeModal=closeModal;
+window.showScope=showScope;
+window.toggleTopic=toggleTopic;
+window.saveScope=saveScope;
+window.markCurrentTopicUnlearned=markCurrentTopicUnlearned;
 
 </script>
 </body>
