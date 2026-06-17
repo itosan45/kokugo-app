@@ -231,12 +231,12 @@ textarea#essayInput:focus{border-color:#4F46E5;}
       <span class="tag" id="k-grade-tag" style="background:#DC262622;color:#DC2626">必出</span>
     </div>
     <div style="text-align:center;padding:10px 0 14px;">
+      <div id="k-reading" style="font-size:18px;color:#818CF8;margin-bottom:12px;font-weight:800;">読み：はあく</div>
       <div id="k-kanji" style="font-size:76px;font-weight:900;color:#F8FAFC;line-height:1;transition:opacity .4s;">把握</div>
-      <div id="k-reading" style="font-size:14px;color:#818CF8;margin-top:8px;font-weight:700;transition:opacity .4s;">はあく</div>
     </div>
     <div id="k-meaning" style="color:#64748B;font-size:13px;margin-bottom:3px;"></div>
     <div id="k-example" style="color:#334155;font-size:12px;margin-bottom:10px;"></div>
-    <button id="toggle-k-btn" onclick="toggleKSample()" style="width:100%;padding:9px;border-radius:9px;border:1px solid #334155;background:transparent;color:#64748B;font-size:13px;cursor:pointer;">👁 お手本を隠す</button>
+    <button id="toggle-k-btn" onclick="toggleKSample()" style="width:100%;padding:9px;border-radius:9px;border:1px solid #334155;background:transparent;color:#64748B;font-size:13px;cursor:pointer;">👁 お手本を見る</button>
   </div>
 
   <div style="margin-bottom:13px;">
@@ -260,7 +260,13 @@ textarea#essayInput:focus{border-color:#4F46E5;}
   </div>
 
   <div class="card">
-    <div style="font-size:13px;color:#94A3B8;margin-bottom:10px;font-weight:600;">書けた？正直に自己採点しよう</div>
+    <div style="font-size:13px;color:#94A3B8;margin-bottom:10px;font-weight:600;">書けた？AI採点か自己採点で確認しよう</div>
+    <button class="btn-primary" id="k-ai-grade-btn" onclick="gradeKakiWithAI()" style="margin-bottom:10px;">AIに採点してもらう ✨</button>
+    <div id="k-ai-feedback" style="display:none;margin-bottom:10px;" class="hint-card-inner">
+      <div style="color:#818CF8;font-size:11px;font-weight:700;margin-bottom:7px;">✨ AI書き取り採点</div>
+      <div id="k-ai-verdict" style="color:#F8FAFC;font-size:15px;font-weight:800;margin-bottom:6px;"></div>
+      <div id="k-ai-comment" style="color:#C7D2FE;font-size:13px;line-height:1.6;"></div>
+    </div>
     <div class="judge-btns">
       <button class="j-btn j-ok" id="j-ok" onclick="judgeKaki(true)">⭕ 書けた！</button>
       <button class="j-btn j-ng" id="j-ng" onclick="judgeKaki(false)">❌ 書けなかった</button>
@@ -702,8 +708,9 @@ let newlyLearnedTopics=ls.get("nm_newly_learned_topics",{});
 // ══ 状態 ══════════════════════════════════════════════════
 let curSubj=null,curUnit=null,quizDeck=[],quizIdx=0,quizResults=[];
 let kakiDeck=[],kakiIdx=0,kakiResults=[],kakiJudged=false;
-let kakiSampleVis=true,traceOn=false,penBig=true,drawing=false,lx=0,ly=0;
+let kakiSampleVis=false,kakiSampleUsed=false,traceOn=false,penBig=true,drawing=false,lx=0,ly=0;
 let essayDeck=[],essayIdx=0,curSessionMode="normal";
+const AI_GRADE_API_URL=localStorage.getItem("kokugo_ai_grade_api_url")||(location.hostname.endsWith("github.io")?"https://kokugo-app-ten.vercel.app/api/grade-writing":"/api/grade-writing");
 
 function available(items){return filterAvailableQuestions(items,[...learnedTopics])}
 function ensureScopeConfigured(){if(scopeConfigured)return true;showScope();return false}
@@ -1220,16 +1227,20 @@ function loadKakiQ(){
   const gc=gradeColor(k.g);
   const gt=document.getElementById("k-grade-tag");gt.textContent=k.g;gt.style.color=gc;gt.style.background=gc+"22";
   document.getElementById("k-kanji").textContent=k.k;
-  document.getElementById("k-reading").textContent=k.r;
+  document.getElementById("k-reading").textContent="読み："+k.r;
   document.getElementById("k-meaning").textContent="意味："+k.m;
   document.getElementById("k-example").textContent="例："+k.ex;
-  kakiSampleVis=true;
-  document.getElementById("k-kanji").style.opacity="1";
+  kakiSampleVis=false;kakiSampleUsed=false;
+  document.getElementById("k-kanji").style.opacity="0";
   document.getElementById("k-reading").style.opacity="1";
-  document.getElementById("toggle-k-btn").textContent="👁 お手本を隠す";
+  document.getElementById("toggle-k-btn").textContent="👁 お手本を見る";
   kakiJudged=false;
   document.getElementById("j-ok").classList.remove("sel");document.getElementById("j-ng").classList.remove("sel");
   document.getElementById("kaki-next-btn").style.display="none";
+  document.getElementById("k-ai-feedback").style.display="none";
+  document.getElementById("k-ai-grade-btn").style.display="block";
+  document.getElementById("k-ai-grade-btn").textContent="AIに採点してもらう ✨";
+  document.getElementById("k-ai-grade-btn").disabled=false;
   document.getElementById("k-hint-card").style.display="none";
   document.getElementById("k-hint-btn").style.display="block";
   document.getElementById("k-hint-btn").textContent="💡 AIに覚え方を教えてもらう";
@@ -1240,9 +1251,40 @@ function loadKakiQ(){
 
 function toggleKSample(){
   kakiSampleVis=!kakiSampleVis;
+  if(kakiSampleVis)kakiSampleUsed=true;
   document.getElementById("k-kanji").style.opacity=kakiSampleVis?"1":"0";
-  document.getElementById("k-reading").style.opacity=kakiSampleVis?"1":"0";
   document.getElementById("toggle-k-btn").textContent=kakiSampleVis?"👁 お手本を隠す":"👁 お手本を見る";
+}
+
+async function gradeKakiWithAI(){
+  if(kakiJudged)return;
+  const k=kakiDeck[kakiIdx],btn=document.getElementById("k-ai-grade-btn");
+  const fb=document.getElementById("k-ai-feedback"),verdict=document.getElementById("k-ai-verdict"),comment=document.getElementById("k-ai-comment");
+  btn.textContent="⏳ AIが採点中…";btn.disabled=true;fb.style.display="none";
+  try{
+    const res=await fetch(AI_GRADE_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      mode:"kanji-writing",
+      kanji:k.k,
+      reading:k.r,
+      meaning:k.m,
+      example:k.ex,
+      sampleShown:kakiSampleUsed,
+      imageData:canvas.toDataURL("image/png")
+    })});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||"AI採点に失敗しました");
+    const ok=data.verdict==="correct";
+    verdict.textContent=ok?"⭕ 正解":"❌ もう一度練習";
+    comment.textContent=[data.comment,data.nextTip,kakiSampleUsed?"お手本を見たので、次は見ずに書けるか確認しよう。":""].filter(Boolean).join(" ");
+    fb.style.display="block";
+    judgeKaki(ok);
+    btn.style.display="none";
+  }catch(err){
+    verdict.textContent="AI採点に接続できませんでした";
+    comment.textContent="通信やAPI設定を確認してください。今回は下の自己採点で続けられます。";
+    fb.style.display="block";
+    btn.textContent="AIに採点してもらう ✨";btn.disabled=false;
+  }
 }
 
 function judgeKaki(ok){
@@ -1275,13 +1317,14 @@ async function loadKanjiHint(){
   const k=kakiDeck[kakiIdx],btn=document.getElementById("k-hint-btn");
   btn.textContent="⏳ AIが考えています…";btn.disabled=true;
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-20250514",max_tokens:1000,
-      system:`受験生向け漢字記憶の専門家。JSON形式のみで返答:{"tip":"覚え方（30字以内）","story":"イメージ（15字以内）","similar":"混同注意（なければ空）"}`,
-      messages:[{role:"user",content:`漢字:「${k.k}」読み:${k.r} 意味:${k.m}`}]
+    const res=await fetch(AI_GRADE_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      mode:"kanji-hint",
+      kanji:k.k,
+      reading:k.r,
+      meaning:k.m
     })});
-    const data=await res.json();const text=data.content?.find(b=>b.type==="text")?.text||"{}";
-    const h=JSON.parse(text.replace(/```json|```/g,"").trim());
+    const h=await res.json();
+    if(!res.ok)throw new Error(h.error||"ヒント取得失敗");
     document.getElementById("k-hint-tip").textContent="💡 "+(h.tip||"");
     document.getElementById("k-hint-story").textContent=h.story?"🖼 "+h.story:"";
     document.getElementById("k-hint-similar").textContent=h.similar?"⚠️ 混同注意:「"+h.similar+"」":"";
@@ -1326,15 +1369,17 @@ async function submitEssay(){
   const fbContent=document.getElementById("essay-fb-content");
   fb.style.display="none";
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-20250514",max_tokens:1000,
-      system:`あなたは高校受験の国語作文の先生です。以下の観点で中学生に向けて優しく添削してください。
-①字数・条件を満たしているか ②主張が明確か ③理由・具体例があるか ④文章のまとまり ⑤改善ポイント1つ
-300字以内で、励ますトーンで。`,
-      messages:[{role:"user",content:`テーマ:${t.theme}\n条件:${t.conditions.join("、")}\n\n作文:\n${text}`}]
+    const res=await fetch(AI_GRADE_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      mode:"essay-feedback",
+      theme:t.theme,
+      conditions:t.conditions,
+      minChar:t.minChar,
+      maxChar:t.maxChar,
+      text
     })});
     const data=await res.json();
-    const aiText=data.content?.find(b=>b.type==="text")?.text||"添削できませんでした。";
+    if(!res.ok)throw new Error(data.error||"添削失敗");
+    const aiText=data.feedback||"添削できませんでした。";
     fbContent.textContent=aiText;
     fb.style.display="block";
     document.getElementById("essay-next-btn").style.display="block";
@@ -1524,6 +1569,7 @@ window.retrySession=retrySession;
 window.answerQuiz=answerQuiz;
 window.nextQuizQ=nextQuizQ;
 window.toggleKSample=toggleKSample;
+window.gradeKakiWithAI=gradeKakiWithAI;
 window.judgeKaki=judgeKaki;
 window.nextKakiQ=nextKakiQ;
 window.clearCanvas=clearCanvas;

@@ -52,3 +52,14 @@ test("all inline scripts have valid JavaScript syntax",()=>{
 test("marking a topic unlearned does not ask for confirmation",()=>{
  assert.doesNotMatch(html,/\bconfirm\s*\(/);
 });
+
+test("kanji writing starts from reading and uses server-side Gemini grading",()=>{
+ assert.match(html,/id="k-reading"[^>]*>読み：/);
+ assert.match(html,/id="toggle-k-btn"[\s\S]*?>👁 お手本を見る<\/button>/);
+ assert.match(html,/kakiSampleVis=false/);
+ assert.match(html,/id="k-ai-grade-btn"/);
+ assert.match(html,/function gradeKakiWithAI\(/);
+ assert.match(html,/canvas\.toDataURL\("image\/png"\)/);
+ assert.match(html,/window\.gradeKakiWithAI\s*=\s*gradeKakiWithAI/);
+ assert.doesNotMatch(html,/fetch\("https:\/\/api\.anthropic\.com/);
+});
